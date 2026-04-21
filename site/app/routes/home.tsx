@@ -1,8 +1,14 @@
 import { Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { fluidFit, layoutFit, prepare } from '@darkroomengineering/fitbox';
 import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
+
+function ClientOnly({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  return mounted ? children : fallback;
+}
 
 export default function Home() {
   return (
@@ -91,8 +97,12 @@ function Demos() {
 
       <SingleLineDemo />
       <MultiLineDemo />
-      <FluidDemo />
-      <WebGLDemo />
+      <ClientOnly fallback={<DemoFrame title="Fluid CSS clamp — zero JS at runtime" description="Loading…" code="">{null}</DemoFrame>}>
+        <FluidDemo />
+      </ClientOnly>
+      <ClientOnly fallback={<DemoFrame title="Beyond the DOM — WebGL" description="Loading…" code="">{null}</DemoFrame>}>
+        <WebGLDemo />
+      </ClientOnly>
     </section>
   );
 }
