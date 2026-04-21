@@ -13,3 +13,4 @@ coverage/
 playground/screenshot.png
 site/build/
 site/.react-router/
+site/.vercel/

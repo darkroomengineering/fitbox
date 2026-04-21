@@ -4,7 +4,4 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [reactRouter(), tsconfigPaths()],
-  resolve: {
-    dedupe: ['react', 'react-dom', '@chenglou/pretext'],
-  },
 });

@@ -8,12 +8,11 @@
     "start": "react-router-serve ./build/server/index.js"
   },
   "dependencies": {
-    "@chenglou/pretext": "^0.0.5",
+    "@darkroomengineering/fitbox": "^0.1.0",
     "@react-router/node": "^7.9.0",
     "@react-router/serve": "^7.9.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
-    "@darkroomengineering/fitbox": "file:..",
     "isbot": "^5.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
