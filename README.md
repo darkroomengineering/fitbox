@@ -59,12 +59,10 @@ Those numbers feed directly into a WebGL/WebGPU text renderer (troika-three-text
 
 ---
 
-## Status
-
-Not yet published to npm. To try it, install directly from GitHub:
+## Install
 
 ```sh
-bun add github:darkroomengineering/fitbox
+bun add fitbox
 ```
 
 ## Client hook

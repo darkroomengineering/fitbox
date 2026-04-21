@@ -1,6 +1,6 @@
 {
   "name": "fitbox",
-  "version": "0.0.0-dev.0",
+  "version": "0.1.0",
   "description": "Reflow-free text-to-box fitting for React, built on Pretext.",
   "type": "module",
   "sideEffects": false,
