@@ -45,10 +45,12 @@ fitbox is narrower than Fitty in one way — it ships a React adapter, not a pla
 
 ---
 
-## Install
+## Status
+
+Not yet published to npm. To try it, install directly from GitHub:
 
 ```sh
-bun add fitbox @chenglou/pretext
+bun add github:darkroomengineering/fitbox @chenglou/pretext
 ```
 
 ## Client hook
