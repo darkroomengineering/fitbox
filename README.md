@@ -6,49 +6,42 @@ Reflow-free text-to-box fitting for React, built on [`@chenglou/pretext`](https:
 
 ## Why this exists
 
-[Fitty](https://github.com/rikschennink/fitty) is the canonical "fit text to its container" library. The way it works — and the way every text-fitting library worked for years — is:
+If you have ever used [Fitty](https://github.com/rikschennink/fitty) or written your own "shrink text to container" logic, you know the shape of it: pick a font-size, put the element in the DOM, read `getBoundingClientRect()`, compare to the container, adjust, read again. The loop terminates quickly — five to ten iterations — but every read forces a layout reflow. Drag a window with twenty fittable headings on the page and you are asking the browser's layout engine to recompute itself thousands of times a second.
 
-1. Put the text in the DOM at some font-size.
-2. Read `element.getBoundingClientRect()`.
-3. Compare to the container width.
-4. Adjust font-size, binary-search, goto 2.
+Every library does it this way because, until recently, the browser was the only oracle that could tell you how text would lay out. That changed when [Cheng Lou](https://github.com/chenglou) released [Pretext](https://github.com/chenglou/pretext), a text measurement and layout library that uses `canvas.measureText()` — which does *not* reflow — as ground truth. With per-glyph widths cached, measuring a wrapped paragraph is microseconds of arithmetic.
 
-Each iteration of that loop forces a layout reflow. A single fit might be 5–10 reflows. A page with 20 fittable headings resizing during a window drag is thousands of reflows per second. Fitty works hard to batch them, but it can't escape the fundamental shape of the problem: **the browser is both the layout engine and the oracle you're asking**.
+fitbox is what a text-fitting library looks like when you build it on that primitive.
 
-In early 2026 [Cheng Lou](https://github.com/chenglou) shipped [Pretext](https://github.com/chenglou/pretext) — a text measurement and layout library that sidesteps the DOM entirely. It uses `canvas.measureText()` as ground truth (which does not trigger reflow) and caches per-glyph widths so subsequent measurements are pure arithmetic. You can measure a paragraph's wrapped height in microseconds, without ever touching layout.
+### The math
 
-fitbox is what Fitty looks like when you build it on that primitive.
+Once measurement stops touching layout, the algorithm collapses.
 
-### The math that falls out
-
-The interesting part isn't that we swap `getBoundingClientRect` for `measureText`. It's that once measurement is reflow-free, the algorithm collapses.
-
-**Single-line fit.** Text width scales linearly with font-size. Prepare the text once at 1px; let `w₁` be its natural width. Then for any container of width `W`, the largest single-line fit is simply:
+**Single-line fit is a closed form.** Text width scales linearly with font-size. Prepare the text once at `1px` and call its natural width `w₁`. For any container of width `W`:
 
 ```
 fontSize = W / w₁
 ```
 
-One division. No search.
+One division. No search. No DOM.
 
-**Multi-line fit.** Line breaks depend on `(fontSize, maxWidth)` in a non-linear way, so we still search. But there's an invariant: scaling `fontSize` by `k` at container width `W` produces the same wrapping as `fontSize = 1` at container width `W / k`. So we prepare once at 1px and binary-search `fontSize` by calling Pretext's `measureLineStats(handle, W / s)` — still pure arithmetic, no DOM, no reflow. 10–12 iterations for pixel precision.
+**Multi-line fit is a reflow-free binary search.** Line breaks are non-linear in `(fontSize, maxWidth)`, so we search — but there is a scaling invariant: `fontSize = s` at `maxWidth = W` wraps identically to `fontSize = 1` at `maxWidth = W / s`. So we prepare once at 1px and binary-search `s` by querying Pretext's `measureLineStats(handle, W / s)`. Ten iterations to pixel precision, still pure arithmetic.
 
-**Fluid CSS.** Because single-line fit is closed-form, its value at any viewport width is a linear function of the viewport. That means we can emit a CSS `clamp(min, calc(a + b·vw), max)` at build or load time and have the browser interpolate between viewport sizes with zero runtime JavaScript. Fitty has no equivalent — it can't know the fit without measuring.
+**Static fluid CSS.** Because single-line fit is linear in viewport width, the entire responsive curve is expressible as `clamp(min, calc(a + b·vw), max)` — a string the browser interpolates for free, zero runtime JavaScript. Fitty cannot produce this; it cannot know the fit without measuring the DOM. fitbox computes the clamp at build or load time and ships it inline.
 
-**SSR.** Pretext's measurement needs a canvas, not a DOM. That means a Node canvas polyfill (e.g. `@napi-rs/canvas`) is enough to compute fits in a loader and ship correctly-sized HTML, hydrating with zero layout shift. Fitty can't do this at all.
+**SSR.** Pretext needs a canvas, not a DOM. Give it `@napi-rs/canvas` on the server, compute fits in a loader, serialize the result as a `preset`, hydrate with the correct font-size already rendered. No layout shift, ever.
 
-### What that adds up to
+### What fitbox is and isn't
 
 | | Fitty | fitbox |
 |---|---|---|
-| Measurement | `getBoundingClientRect()` on every probe | `canvas.measureText()` once per (text, font) |
-| Single-line fit | Binary search over DOM | Closed form: `W / w₁` |
-| Multi-line fit | Not supported | Binary search over reflow-free stats |
-| Fluid CSS | Not supported | Emits static `clamp(…)` — zero JS at runtime |
-| SSR | Not possible (needs DOM) | Supported via canvas polyfill |
+| Measurement | `getBoundingClientRect()` per probe | `canvas.measureText()`, cached |
+| Single-line fit | Binary search over DOM | `W / w₁` |
+| Multi-line fit | — | Reflow-free binary search |
+| Fluid CSS | Hand-rolled clamp | Computed `clamp(…)` |
+| SSR | — | Supported via canvas polyfill |
 | Bundle | ~4KB min+gz | ~3KB core + ~3KB react adapter |
 
-fitbox is narrower than Fitty in one way (it assumes you want React; plain-DOM usage needs a small wrapper) and wider in several others (multi-line, fluid CSS, SSR). The shared primitive — "measurement without reflow" — is what unlocks all of them.
+fitbox is narrower than Fitty in one way — it ships a React adapter, not a plain-DOM binding — and wider in several others. Reach for Fitty if you need plain DOM or are supporting very old browsers. Reach for hand-rolled CSS fluid-typography recipes if you are comfortable guessing at your text's natural width. Reach for fitbox when you want the fit to be exact, to work under SSR, or to disappear into a static CSS string after the first render.
 
 ---
 
