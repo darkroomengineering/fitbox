@@ -11,3 +11,5 @@ build/
 coverage/
 *.tsbuildinfo
 playground/screenshot.png
+site/build/
+site/.react-router/
