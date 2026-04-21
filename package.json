@@ -44,8 +44,10 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@chenglou/pretext": "^0.0.5"
+  },
   "peerDependencies": {
-    "@chenglou/pretext": "*",
     "react": ">=19.0.0"
   },
   "peerDependenciesMeta": {
@@ -53,7 +55,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.2",
-    "@chenglou/pretext": "^0.0.5",
     "@types/react": "^19.0.0",
     "react": "^19.0.0",
     "tsup": "^8.5.1",

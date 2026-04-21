@@ -57,10 +57,7 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
         }
       }
       if (cancelled) return;
-      const opts: PrepareOptions = {};
-      if (whiteSpace !== undefined) opts.whiteSpace = whiteSpace;
-      if (wordBreak !== undefined) opts.wordBreak = wordBreak;
-      setHandle(prepare(text, family, opts));
+      setHandle(prepare(text, family, { whiteSpace, wordBreak }));
     };
     run();
     return () => {
@@ -104,31 +101,29 @@ export type FitTextProps = Omit<HTMLAttributes<HTMLElement>, 'children'> &
     fluid?: FluidFitResult;
   };
 
-export function FitText(props: FitTextProps): ReactElement {
-  const {
-    as = 'span',
-    children,
-    fluid,
-    style: styleProp,
-    family,
-    prepare: prepareOpts,
-    preset,
-    height,
-    maxLines,
-    minSize,
-    maxSize,
-    lineHeight,
-    ...domProps
-  } = props;
+const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitTextOptions> = new Set([
+  'family',
+  'prepare',
+  'preset',
+  'height',
+  'maxLines',
+  'minSize',
+  'maxSize',
+  'lineHeight',
+]);
 
-  const fitOpts: UseFitTextOptions = { family };
-  if (prepareOpts !== undefined) fitOpts.prepare = prepareOpts;
-  if (preset !== undefined) fitOpts.preset = preset;
-  if (height !== undefined) fitOpts.height = height;
-  if (maxLines !== undefined) fitOpts.maxLines = maxLines;
-  if (minSize !== undefined) fitOpts.minSize = minSize;
-  if (maxSize !== undefined) fitOpts.maxSize = maxSize;
-  if (lineHeight !== undefined) fitOpts.lineHeight = lineHeight;
+export function FitText(props: FitTextProps): ReactElement {
+  const { as = 'span', children, fluid, style: styleProp, ...rest } = props;
+
+  const fitOpts = {} as UseFitTextOptions;
+  const domProps: Record<string, unknown> = {};
+  for (const key in rest) {
+    if (FIT_OPTION_KEYS.has(key as keyof UseFitTextOptions)) {
+      (fitOpts as Record<string, unknown>)[key] = (rest as Record<string, unknown>)[key];
+    } else {
+      domProps[key] = (rest as Record<string, unknown>)[key];
+    }
+  }
 
   const hook = useFitText(children, fitOpts);
 

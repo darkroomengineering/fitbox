@@ -4,9 +4,11 @@
   "workspaces": {
     "": {
       "name": "fitbox",
+      "dependencies": {
+        "@chenglou/pretext": "^0.0.5",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.4.2",
-        "@chenglou/pretext": "^0.0.5",
         "@types/react": "^19.0.0",
         "react": "^19.0.0",
         "tsup": "^8.5.1",
@@ -14,7 +16,6 @@
         "vitest": "^2.1.8",
       },
       "peerDependencies": {
-        "@chenglou/pretext": "*",
         "react": ">=19.0.0",
       },
       "optionalPeers": [

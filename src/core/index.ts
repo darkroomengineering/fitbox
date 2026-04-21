@@ -204,30 +204,26 @@ export function fluidFitMultiLine(
     maxSize,
   } = opts;
 
-  const probes: { vw: number; size: number; lineCount: number }[] = [];
+  type Probe = { vw: number; size: number; lineCount: number };
+  const probes: Probe[] = [];
   for (let i = 0; i <= samples; i++) {
     const vw = minViewport + ((maxViewport - minViewport) * i) / samples;
-    const fitOpts: FitOptions = {
+    const r = fit(target, {
       width: vw * widthFraction,
       maxLines,
       lineHeight,
-    };
-    if (minSize !== undefined) fitOpts.minSize = minSize;
-    if (maxSize !== undefined) fitOpts.maxSize = maxSize;
-    const r = fit(target, fitOpts);
+      minSize,
+      maxSize,
+    });
     probes.push({ vw, size: r.fontSize, lineCount: r.lineCount });
   }
 
   const segments: FluidFitSegment[] = [];
-  let start = 0;
-  for (let i = 1; i <= probes.length; i++) {
-    const head = probes[start];
-    const curr = probes[i];
-    const lastInRun = i === probes.length || (curr && head && curr.lineCount !== head.lineCount);
-    if (!lastInRun) continue;
-    const a = probes[start];
-    const b = probes[i - 1];
-    if (!a || !b) continue;
+  for (let start = 0; start < probes.length; ) {
+    const a = probes[start]!;
+    let end = start + 1;
+    while (end < probes.length && probes[end]!.lineCount === a.lineCount) end++;
+    const b = probes[end - 1]!;
     const slope = b.vw === a.vw ? 0 : (b.size - a.size) / (b.vw - a.vw);
     const intercept = a.size - slope * a.vw;
     const lo = Math.min(a.size, b.size);
@@ -240,7 +236,7 @@ export function fluidFitMultiLine(
       lineCount: a.lineCount,
       cssClamp: `clamp(${round(lo)}px, calc(${round(intercept)}px + ${round(slope * 100)}vw), ${round(hi)}px)`,
     });
-    start = i;
+    start = end;
   }
 
   const rules = segments.map((seg, idx) => {
