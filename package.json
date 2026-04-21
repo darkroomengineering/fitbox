@@ -1,0 +1,63 @@
+{
+  "name": "fitbox",
+  "version": "0.0.0-dev.0",
+  "description": "Reflow-free text-to-box fitting for React, built on Pretext.",
+  "type": "module",
+  "sideEffects": false,
+  "author": "darkroom.engineering",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkroomengineering/fitbox.git"
+  },
+  "keywords": [
+    "fit",
+    "text",
+    "fitty",
+    "pretext",
+    "react",
+    "react-router",
+    "typography",
+    "clamp",
+    "fluid"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "playground": "bun --cwd playground dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@chenglou/pretext": "*",
+    "react": ">=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": { "optional": true }
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.2",
+    "@chenglou/pretext": "^0.0.5",
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}
