@@ -157,7 +157,7 @@ function DynamicFitText({
 }
 
 export function FitText(props: FitTextProps): ReactElement {
-  const { as = 'span', children, fluid, style: styleProp, ...rest } = props;
+  const { as = 'div', children, fluid, style: styleProp, ...rest } = props;
   const { fitOpts, domProps } = splitProps(rest as Record<string, unknown>);
 
   return fluid
