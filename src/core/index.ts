@@ -21,13 +21,27 @@ export type PrepareOptions = {
   wordBreak?: 'normal' | 'keep-all';
 };
 
+/**
+ * Build a 1px Pretext handle for the given text.
+ *
+ * `font` accepts either a bare family (`'Inter'`, `'system-ui, sans-serif'`)
+ * or a full canvas font shorthand (`'bold italic 16px Inter'`). In the
+ * shorthand case the size is normalized to `1px` so the scaling invariant
+ * used by `fit` and `layoutFit` still holds.
+ */
 export function prepare(
   text: string,
-  fontFamily: string,
+  font: string,
   options?: PrepareOptions,
 ): FitHandle {
-  const pretext = prepareWithSegments(text, `1px ${fontFamily}`, options);
+  const pretext = prepareWithSegments(text, normalizeFontTo1px(font), options);
   return { pretext, naturalWidth: measureNaturalWidth(pretext) };
+}
+
+const FONT_SIZE_RE = /\b\d+(?:\.\d+)?\s*(?:px|pt|em|rem|%)(?:\s*\/\s*\S+)?/i;
+
+function normalizeFontTo1px(font: string): string {
+  return FONT_SIZE_RE.test(font) ? font.replace(FONT_SIZE_RE, '1px') : `1px ${font}`;
 }
 
 export type FitOptions = {

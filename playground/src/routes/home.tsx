@@ -2,13 +2,11 @@ import { Link, useLoaderData } from 'react-router';
 import { fluidFit, prepare } from '@darkroomengineering/fitbox';
 import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
 
-const FAMILY = 'system-ui, sans-serif';
-
 // Client loader — runs after hydration, has window.document for canvas.
 // We compute fluid CSS here rather than server-side to avoid needing a
 // Node canvas polyfill for the playground.
 export async function clientLoader() {
-  const handle = prepare('Fitbox', FAMILY);
+  const handle = prepare('Fitbox', 'system-ui');
   const fluid = fluidFit(handle, {
     minViewport: 320,
     maxViewport: 1440,
@@ -57,7 +55,7 @@ export default function Home() {
 function SingleLineDemo() {
   return (
     <div className="box resize" style={{ width: 480 }}>
-      <FitText family={FAMILY} maxSize={200}>
+      <FitText maxSize={200}>
         Hello World
       </FitText>
     </div>
@@ -68,7 +66,6 @@ function MultiLineDemo() {
   const text =
     'Typography that actually fits its container, without layout thrashing or binary searches over the DOM.';
   const { ref, style } = useFitText<HTMLParagraphElement>(text, {
-    family: FAMILY,
     maxLines: 3,
     maxSize: 48,
     lineHeight: 1.15,
@@ -89,7 +86,7 @@ function FluidDemo({ fluid }: { fluid: ReturnType<typeof fluidFit> }) {
   return (
     <>
       <div className="box">
-        <FitText family={FAMILY} fluid={fluid} as="h3" style={{ margin: 0 }}>
+        <FitText fluid={fluid} as="h3" style={{ margin: 0 }}>
           Fitbox
         </FitText>
       </div>
@@ -106,7 +103,7 @@ function PresetDemo() {
   const preset = { fontSize: 72, lineCount: 1, height: 72 * 1.2 };
   return (
     <div className="box">
-      <FitText family={FAMILY} preset={preset} as="h3" style={{ margin: 0 }}>
+      <FitText preset={preset} as="h3" style={{ margin: 0 }}>
         Preset from loader
       </FitText>
       <p className="note">

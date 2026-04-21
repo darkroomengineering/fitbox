@@ -21,8 +21,19 @@ import {
 const useIsomorphicLayoutEffect =
   typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+function resolveFont(el: HTMLElement): string {
+  const cs = getComputedStyle(el);
+  return `${cs.fontStyle} ${cs.fontWeight} 1px ${cs.fontFamily}`;
+}
+
 export type UseFitTextOptions = Omit<FitOptions, 'width'> & {
-  family: string;
+  /**
+   * Font family (or any canvas font shorthand). When omitted, the hook
+   * reads `font-family`, `font-weight`, and `font-style` from the observed
+   * element's computed styles. The element inherits these from ancestors
+   * per normal CSS — most callers need not pass this at all.
+   */
+  family?: string;
   prepare?: PrepareOptions;
   preset?: FitResult;
 };
@@ -46,17 +57,19 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   const [handle, setHandle] = useState<FitHandle | null>(null);
 
   useEffect(() => {
+    if (!element && !family) return; // need the element to read computed font
     let cancelled = false;
     const run = async () => {
       if (document.fonts.status !== 'loaded') await document.fonts.ready;
       if (cancelled) return;
-      setHandle(prepare(text, family, { whiteSpace, wordBreak }));
+      const font = family ?? resolveFont(element!);
+      setHandle(prepare(text, font, { whiteSpace, wordBreak }));
     };
     run();
     return () => {
       cancelled = true;
     };
-  }, [text, family, whiteSpace, wordBreak]);
+  }, [element, text, family, whiteSpace, wordBreak]);
 
   useIsomorphicLayoutEffect(() => {
     if (!element) return;

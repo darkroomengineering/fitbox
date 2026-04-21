@@ -72,7 +72,6 @@ import { useFitText } from '@darkroomengineering/fitbox/react';
 
 function Headline({ text }: { text: string }) {
   const { ref, style } = useFitText<HTMLHeadingElement>(text, {
-    family: 'Inter',
     maxLines: 2,
     maxSize: 120,
   });
@@ -80,14 +79,14 @@ function Headline({ text }: { text: string }) {
 }
 ```
 
-A `ResizeObserver` drives refits; `document.fonts.ready` gates first measurement so metrics aren't taken against a fallback font.
+The hook reads `font-family`, `font-weight`, and `font-style` from the element's computed styles — no need to pass `family` unless you want to override. A `ResizeObserver` drives refits; `document.fonts.ready` gates first measurement so metrics aren't taken against a fallback font.
 
 ## `<FitText>`
 
 ```tsx
 import { FitText } from '@darkroomengineering/fitbox/react';
 
-<FitText family="Inter" maxLines={3} as="h1">
+<FitText maxLines={3} as="h1">
   Typography that actually fits its container.
 </FitText>
 ```
@@ -108,7 +107,7 @@ const fluid = fluidFit(prepare('Fitbox', 'Inter'), {
 });
 // fluid.cssClamp === 'clamp(24px, calc(… + …vw), 180px)'
 
-<FitText family="Inter" fluid={fluid}>Fitbox</FitText>
+<FitText fluid={fluid}>Fitbox</FitText>
 ```
 
 For wrapping text, `fluidFitMultiLine` probes the viewport range, finds breakpoints where line count changes, and emits a stylesheet of media-query-scoped clamps.

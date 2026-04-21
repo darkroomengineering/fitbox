@@ -4,27 +4,6 @@ import { useState } from 'react';
 import { fluidFit, layoutFit, prepare } from '@darkroomengineering/fitbox';
 import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
 
-const FAMILY = 'system-ui, sans-serif';
-
-export async function clientLoader() {
-  const hero = fluidFit(prepare('fitbox', FAMILY), {
-    minViewport: 360,
-    maxViewport: 1440,
-    minSize: 72,
-    maxSize: 360,
-  });
-  return { hero };
-}
-clientLoader.hydrate = true as const;
-
-export function HydrateFallback() {
-  return (
-    <main className="mx-auto max-w-5xl px-6 py-24">
-      <p className="text-[var(--color-muted)]">Measuring…</p>
-    </main>
-  );
-}
-
 export default function Home() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-16">
@@ -42,7 +21,6 @@ function Hero() {
     <section className="border-b border-[var(--color-line)] pb-24">
       <FitText
         as="h1"
-        family={FAMILY}
         maxSize={360}
         style={{
           fontWeight: 700,
@@ -84,8 +62,9 @@ function Why() {
         </p>
         <p>
           <a href="https://github.com/chenglou/pretext">Pretext</a> measures text
-          through <code>canvas.measureText</code>, which doesn't reflow. With per-glyph
-          widths cached, measuring a wrapped paragraph is microseconds of arithmetic.
+          through <code>canvas.measureText</code>, which doesn't reflow. With
+          per-glyph widths cached, measuring a wrapped paragraph is microseconds of
+          arithmetic.
         </p>
         <p>
           When measurement stops touching layout, the algorithm collapses. Single-line
@@ -150,12 +129,13 @@ function SingleLineDemo() {
     <DemoFrame
       title="Single-line fit"
       description="Drag the right edge of the box. The closed-form fit solves in one division, no DOM measurement, no search."
-      code={`<FitText family="Inter" maxSize={200}>Hello World</FitText>`}
+      code={`<FitText maxSize={200}>Hello World</FitText>`}
     >
-      <div className="resize-x overflow-hidden p-6" style={{ minWidth: 160, width: 480 }}>
-        <FitText family={FAMILY} maxSize={200}>
-          Hello World
-        </FitText>
+      <div
+        className="resize-x overflow-hidden p-6"
+        style={{ minWidth: 160, width: 480 }}
+      >
+        <FitText maxSize={200}>Hello World</FitText>
       </div>
     </DemoFrame>
   );
@@ -165,7 +145,6 @@ function MultiLineDemo() {
   const text =
     'Typography that actually fits its container, without layout thrashing or binary searches over the DOM.';
   const { ref, style } = useFitText<HTMLParagraphElement>(text, {
-    family: FAMILY,
     maxLines: 3,
     maxSize: 48,
     lineHeight: 1.2,
@@ -174,7 +153,7 @@ function MultiLineDemo() {
     <DemoFrame
       title="Multi-line fit"
       description="maxLines: 3. Binary search uses the same 1px handle — 10 iterations of pure arithmetic, still no DOM."
-      code={`useFitText(text, { family: 'Inter', maxLines: 3, maxSize: 48 })`}
+      code={`useFitText(text, { maxLines: 3, maxSize: 48 })`}
     >
       <div
         className="flex resize-x items-center overflow-hidden p-6"
@@ -189,8 +168,8 @@ function MultiLineDemo() {
 }
 
 function FluidDemo() {
-  // Computed once per render; result is a static CSS string — no JS at runtime.
-  const fluid = fluidFit(prepare('fluid typography', FAMILY), {
+  // Static: computed on the server (or once on the client), shipped as a CSS string.
+  const fluid = fluidFit(prepare('fluid typography', 'system-ui'), {
     minViewport: 360,
     maxViewport: 1440,
     minSize: 28,
@@ -200,7 +179,7 @@ function FluidDemo() {
     <DemoFrame
       title="Fluid CSS clamp — zero JS at runtime"
       description="The browser interpolates this clamp() natively. Resize the window and watch it move."
-      code={`fluidFit(prepare('fluid typography', 'Inter'), {
+      code={`fluidFit(prepare('fluid typography'), {
   minViewport: 360, maxViewport: 1440, minSize: 28, maxSize: 120,
 })
 // → ${fluid.cssClamp}`}
@@ -208,7 +187,6 @@ function FluidDemo() {
       <div className="p-6">
         <FitText
           as="h3"
-          family={FAMILY}
           fluid={fluid}
           style={{
             margin: 0,
@@ -226,7 +204,7 @@ function FluidDemo() {
 
 function WebGLDemo() {
   const [handle] = useState(() =>
-    prepare('fit to a texture, not the DOM', FAMILY),
+    prepare('fit to a texture, not the DOM', 'system-ui'),
   );
   const width = 720;
   const layout = layoutFit(handle, {
