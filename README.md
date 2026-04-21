@@ -48,7 +48,7 @@ fitbox is narrower than Fitty in one way — it ships a React adapter, not a pla
 Because measurement is reflow-free, nothing about the fit algorithm depends on the text ending up in an HTML element. `layoutFit` returns the per-line layout in a rendering-backend-agnostic shape:
 
 ```ts
-import { prepare, layoutFit } from 'fitbox';
+import { prepare, layoutFit } from '@darkroomengineering/fitbox';
 
 const handle = prepare('Hello world', 'Inter');
 const { fontSize, lines } = layoutFit(handle, { width: 1024, maxLines: 2 });
@@ -62,13 +62,13 @@ Those numbers feed directly into a WebGL/WebGPU text renderer (troika-three-text
 ## Install
 
 ```sh
-bun add fitbox
+bun add @darkroomengineering/fitbox
 ```
 
 ## Client hook
 
 ```tsx
-import { useFitText } from 'fitbox/react';
+import { useFitText } from '@darkroomengineering/fitbox/react';
 
 function Headline({ text }: { text: string }) {
   const { ref, style } = useFitText<HTMLHeadingElement>(text, {
@@ -85,7 +85,7 @@ A `ResizeObserver` drives refits; `document.fonts.ready` gates first measurement
 ## `<FitText>`
 
 ```tsx
-import { FitText } from 'fitbox/react';
+import { FitText } from '@darkroomengineering/fitbox/react';
 
 <FitText family="Inter" maxLines={3} as="h1">
   Typography that actually fits its container.
@@ -97,8 +97,8 @@ import { FitText } from 'fitbox/react';
 For responsive single-line headings, emit a static `clamp()` and let the browser interpolate:
 
 ```tsx
-import { prepare, fluidFit } from 'fitbox';
-import { FitText } from 'fitbox/react';
+import { prepare, fluidFit } from '@darkroomengineering/fitbox';
+import { FitText } from '@darkroomengineering/fitbox/react';
 
 const fluid = fluidFit(prepare('Fitbox', 'Inter'), {
   minViewport: 320,
@@ -118,14 +118,14 @@ For wrapping text, `fluidFitMultiLine` probes the viewport range, finds breakpoi
 ```ts
 // entry.server.ts
 import { createCanvas } from '@napi-rs/canvas';
-import { configureServerCanvas } from 'fitbox/server';
+import { configureServerCanvas } from '@darkroomengineering/fitbox/server';
 
 configureServerCanvas(() => createCanvas(1, 1), { cacheMax: 1024 });
 ```
 
 ```ts
 // routes/home.ts — react-router loader
-import { fitCached } from 'fitbox/server';
+import { fitCached } from '@darkroomengineering/fitbox/server';
 
 export async function loader() {
   return {
@@ -136,7 +136,7 @@ export async function loader() {
 
 ```tsx
 // routes/home.tsx
-import { FitText } from 'fitbox/react';
+import { FitText } from '@darkroomengineering/fitbox/react';
 import { useLoaderData } from 'react-router';
 
 export default function Home() {
@@ -149,7 +149,7 @@ export default function Home() {
 
 ## API
 
-### `fitbox`
+### `@darkroomengineering/fitbox`
 
 - `prepare(text, fontFamily, options?)` — build a 1px Pretext handle.
 - `fit(handle, { width, height?, maxLines?, minSize?, maxSize?, lineHeight? })` — closed-form single-line or binary-search multi-line.
@@ -157,12 +157,12 @@ export default function Home() {
 - `fluidFit(handle, { minViewport, maxViewport, widthFraction?, minSize?, maxSize? })` — single-line CSS clamp.
 - `fluidFitMultiLine(handle, { …, maxLines, samples?, selector? })` — piecewise `@media` stylesheet for wrapping text.
 
-### `fitbox/react`
+### `@darkroomengineering/fitbox/react`
 
 - `useFitText<E>(text, options)` — returns `{ ref, style, result }`.
 - `<FitText>` — element wrapper. Accepts `as`, `preset`, `fluid`.
 
-### `fitbox/server`
+### `@darkroomengineering/fitbox/server`
 
 - `configureServerCanvas(factory, options?)` — install canvas shim, configure cache.
 - `fitCached(text, family, fitOpts, prepareOpts?)` — cached `prepare + fit`.

@@ -1,6 +1,6 @@
 import { Link, useLoaderData } from 'react-router';
-import { fluidFit, prepare } from 'fitbox';
-import { FitText, useFitText } from 'fitbox/react';
+import { fluidFit, prepare } from '@darkroomengineering/fitbox';
+import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
 
 const FAMILY = 'system-ui, sans-serif';
 
