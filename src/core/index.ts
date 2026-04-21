@@ -1,4 +1,5 @@
 import {
+  layoutWithLines,
   measureLineStats,
   measureNaturalWidth,
   prepareWithSegments,
@@ -110,6 +111,46 @@ export function fit(target: FitHandle, opts: FitOptions): FitResult {
     lineCount: bestLineCount,
     height: bestLineCount * best * lineHeight,
   };
+}
+
+export type LayoutFitLine = {
+  text: string;
+  /** Width of this line in px at the fitted fontSize. */
+  width: number;
+  /** Top offset of this line from the text block's origin, in px. */
+  y: number;
+};
+
+export type LayoutFitResult = FitResult & {
+  /** Per-line text, width, and y-offset — API-agnostic output suitable for
+   *  WebGL/WebGPU/Canvas/SVG/any custom renderer. */
+  lines: LayoutFitLine[];
+};
+
+/**
+ * Like `fit`, but also returns the per-line layout at the fitted fontSize.
+ *
+ * The output is rendering-backend-agnostic: `{ text, width, y }` per line,
+ * with y measured from the block's top edge and width in pixels at the
+ * fitted size. Feed directly into drei's `<Text>`, troika-three-text, a
+ * custom SDF shader, Canvas, SVG — whatever you're drawing with.
+ */
+export function layoutFit(target: FitHandle, opts: FitOptions): LayoutFitResult {
+  const f = fit(target, opts);
+  const { lineHeight = DEFAULT_LINE_HEIGHT, width } = opts;
+  if (width <= 0 || f.fontSize <= 0) {
+    return { ...f, lines: [] };
+  }
+  // Scaling invariant: layout at 1px with maxWidth (width / fontSize)
+  // produces the same wrapping as layout at fontSize with maxWidth (width).
+  const raw = layoutWithLines(target.pretext, width / f.fontSize, lineHeight);
+  const pitch = f.fontSize * lineHeight;
+  const lines = raw.lines.map((line, i) => ({
+    text: line.text,
+    width: line.width * f.fontSize,
+    y: i * pitch,
+  }));
+  return { ...f, lines };
 }
 
 export type FluidFitOptions = {

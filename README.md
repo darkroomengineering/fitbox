@@ -43,6 +43,20 @@ One division. No search. No DOM.
 
 fitbox is narrower than Fitty in one way — it ships a React adapter, not a plain-DOM binding — and wider in several others. Reach for Fitty if you need plain DOM or are supporting very old browsers. Reach for hand-rolled CSS fluid-typography recipes if you are comfortable guessing at your text's natural width. Reach for fitbox when you want the fit to be exact, to work under SSR, or to disappear into a static CSS string after the first render.
 
+### Beyond the DOM
+
+Because measurement is reflow-free, nothing about the fit algorithm depends on the text ending up in an HTML element. `layoutFit` returns the per-line layout in a rendering-backend-agnostic shape:
+
+```ts
+import { prepare, layoutFit } from 'fitbox';
+
+const handle = prepare('Hello world', 'Inter');
+const { fontSize, lines } = layoutFit(handle, { width: 1024, maxLines: 2 });
+// lines: Array<{ text: string; width: number; y: number }>
+```
+
+Those numbers feed directly into a WebGL/WebGPU text renderer (troika-three-text, drei's `<Text>`, a custom SDF shader), an offscreen Canvas, an SVG generator, a PDF pipeline — anywhere you want typography with correct fit and no DOM.
+
 ---
 
 ## Status
@@ -141,6 +155,7 @@ export default function Home() {
 
 - `prepare(text, fontFamily, options?)` — build a 1px Pretext handle.
 - `fit(handle, { width, height?, maxLines?, minSize?, maxSize?, lineHeight? })` — closed-form single-line or binary-search multi-line.
+- `layoutFit(handle, fitOpts)` — same as `fit`, plus `lines: Array<{ text, width, y }>` for non-DOM renderers (WebGL, WebGPU, Canvas, SVG).
 - `fluidFit(handle, { minViewport, maxViewport, widthFraction?, minSize?, maxSize? })` — single-line CSS clamp.
 - `fluidFitMultiLine(handle, { …, maxLines, samples?, selector? })` — piecewise `@media` stylesheet for wrapping text.
 

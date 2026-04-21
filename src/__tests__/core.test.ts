@@ -20,10 +20,31 @@ vi.mock('@chenglou/pretext', () => {
       const lineCount = Math.ceil(h.text.length / charsPerLine);
       return { lineCount, maxLineWidth: charsPerLine * h.charWidth };
     },
+    layoutWithLines: (
+      h: { text: string; charWidth: number },
+      maxWidth: number,
+      lineHeight: number,
+    ) => {
+      const natural = h.text.length * h.charWidth;
+      if (maxWidth >= natural) {
+        return {
+          lineCount: 1,
+          height: lineHeight,
+          lines: [{ text: h.text, width: natural, start: {}, end: {} }],
+        };
+      }
+      const charsPerLine = Math.max(1, Math.floor(maxWidth / h.charWidth));
+      const lines = [];
+      for (let i = 0; i < h.text.length; i += charsPerLine) {
+        const text = h.text.slice(i, i + charsPerLine);
+        lines.push({ text, width: text.length * h.charWidth, start: {}, end: {} });
+      }
+      return { lineCount: lines.length, height: lines.length * lineHeight, lines };
+    },
   };
 });
 
-import { fit, fluidFit, fluidFitMultiLine, prepare } from '../core/index.js';
+import { fit, fluidFit, fluidFitMultiLine, layoutFit, prepare } from '../core/index.js';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -160,6 +181,41 @@ describe('fluidFitMultiLine', () => {
       samples: 4,
     });
     expect(result.css).toContain('h1.hero {');
+  });
+});
+
+describe('layoutFit', () => {
+  it('returns fontSize plus per-line positions at the fitted size', () => {
+    // 8 chars × 0.5 = naturalWidth 4 at 1px.
+    const handle = prepare('abcdefgh', 'Inter');
+    const result = layoutFit(handle, { width: 200 });
+    // single-line fit: 200 / 4 = fontSize 50, one line spanning 200px at y=0
+    expect(result.fontSize).toBeCloseTo(50, 6);
+    expect(result.lines).toHaveLength(1);
+    expect(result.lines[0]?.text).toBe('abcdefgh');
+    expect(result.lines[0]?.width).toBeCloseTo(200, 6);
+    expect(result.lines[0]?.y).toBe(0);
+  });
+
+  it('stacks multi-line y positions at fontSize × lineHeight', () => {
+    const handle = prepare('aaaaaaaaaaaaaaaaaaaa', 'Inter'); // 20 chars, natural 10
+    const result = layoutFit(handle, {
+      width: 100,
+      maxLines: 2,
+      lineHeight: 1.2,
+    });
+    // With 2 lines and fitting happens at s≈20, each line y-pitch = 20 × 1.2 = 24
+    expect(result.lineCount).toBe(2);
+    expect(result.lines).toHaveLength(2);
+    expect(result.lines[0]?.y).toBe(0);
+    const pitch = result.fontSize * 1.2;
+    expect(result.lines[1]?.y).toBeCloseTo(pitch, 4);
+  });
+
+  it('returns empty lines array when width is non-positive', () => {
+    const handle = prepare('hello', 'Inter');
+    const result = layoutFit(handle, { width: 0 });
+    expect(result.lines).toEqual([]);
   });
 });
 
