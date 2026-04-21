@@ -5,7 +5,6 @@ import {
   createElement,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useState,
 } from 'react';
 import {
@@ -49,13 +48,7 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
-      if (typeof document !== 'undefined' && document.fonts?.status !== 'loaded') {
-        try {
-          await document.fonts.ready;
-        } catch {
-          // proceed with whatever font is currently available
-        }
-      }
+      if (document.fonts.status !== 'loaded') await document.fonts.ready;
       if (cancelled) return;
       setHandle(prepare(text, family, { whiteSpace, wordBreak }));
     };
@@ -66,7 +59,7 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   }, [text, family, whiteSpace, wordBreak]);
 
   useIsomorphicLayoutEffect(() => {
-    if (!element || typeof ResizeObserver === 'undefined') return;
+    if (!element) return;
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) setWidth(entry.contentRect.width);
@@ -75,21 +68,17 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
     return () => observer.disconnect();
   }, [element]);
 
-  const result = useMemo<FitResult | null>(() => {
-    if (!handle || width === null || width <= 0) return preset ?? null;
-    return fit(handle, { ...fitOpts, width });
-  }, [handle, width, preset, fitOpts]);
+  const result =
+    handle && width !== null && width > 0
+      ? fit(handle, { ...fitOpts, width })
+      : (preset ?? null);
 
-  const style = useMemo<CSSProperties | undefined>(
-    () =>
-      result
-        ? {
-            fontSize: `${result.fontSize}px`,
-            lineHeight: fitOpts.lineHeight ?? DEFAULT_LINE_HEIGHT,
-          }
-        : undefined,
-    [result, fitOpts.lineHeight],
-  );
+  const style: CSSProperties | undefined = result
+    ? {
+        fontSize: `${result.fontSize}px`,
+        lineHeight: fitOpts.lineHeight ?? DEFAULT_LINE_HEIGHT,
+      }
+    : undefined;
 
   return { ref: setElement, style, result };
 }
@@ -112,29 +101,66 @@ const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitTextOptions> = new Set([
   'lineHeight',
 ]);
 
-export function FitText(props: FitTextProps): ReactElement {
-  const { as = 'span', children, fluid, style: styleProp, ...rest } = props;
-
+function splitProps(
+  rest: Record<string, unknown>,
+): { fitOpts: UseFitTextOptions; domProps: Record<string, unknown> } {
   const fitOpts = {} as UseFitTextOptions;
   const domProps: Record<string, unknown> = {};
   for (const key in rest) {
     if (FIT_OPTION_KEYS.has(key as keyof UseFitTextOptions)) {
-      (fitOpts as Record<string, unknown>)[key] = (rest as Record<string, unknown>)[key];
+      (fitOpts as Record<string, unknown>)[key] = rest[key];
     } else {
-      domProps[key] = (rest as Record<string, unknown>)[key];
+      domProps[key] = rest[key];
     }
   }
+  return { fitOpts, domProps };
+}
 
+/**
+ * When `fluid` is provided, skip the measurement hook entirely — the browser
+ * interpolates `clamp()` natively, so we only need to render a plain element.
+ * No ResizeObserver, no prepare, no canvas.
+ */
+function FluidFitText({
+  as,
+  children,
+  fluid,
+  styleProp,
+  domProps,
+}: {
+  as: keyof HTMLElementTagNameMap;
+  children: string;
+  fluid: FluidFitResult;
+  styleProp: CSSProperties | undefined;
+  domProps: Record<string, unknown>;
+}): ReactElement {
+  const style: CSSProperties = { fontSize: fluid.cssClamp, ...styleProp };
+  return createElement(as, { ...domProps, style }, children);
+}
+
+function DynamicFitText({
+  as,
+  children,
+  fitOpts,
+  styleProp,
+  domProps,
+}: {
+  as: keyof HTMLElementTagNameMap;
+  children: string;
+  fitOpts: UseFitTextOptions;
+  styleProp: CSSProperties | undefined;
+  domProps: Record<string, unknown>;
+}): ReactElement {
   const hook = useFitText(children, fitOpts);
+  const style: CSSProperties = { ...hook.style, ...styleProp };
+  return createElement(as, { ...domProps, ref: hook.ref, style }, children);
+}
 
-  const mergedStyle: CSSProperties = {
-    ...(fluid ? { fontSize: fluid.cssClamp } : hook.style),
-    ...styleProp,
-  };
+export function FitText(props: FitTextProps): ReactElement {
+  const { as = 'span', children, fluid, style: styleProp, ...rest } = props;
+  const { fitOpts, domProps } = splitProps(rest as Record<string, unknown>);
 
-  return createElement(
-    as,
-    { ...domProps, ref: fluid ? undefined : hook.ref, style: mergedStyle },
-    children,
-  );
+  return fluid
+    ? createElement(FluidFitText, { as, children, fluid, styleProp, domProps })
+    : createElement(DynamicFitText, { as, children, fitOpts, styleProp, domProps });
 }

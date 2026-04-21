@@ -1,8 +1,7 @@
 import { Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { PlaneGeometry } from 'three';
 import { layoutFit, prepare } from 'fitbox';
 
 const FAMILY = 'system-ui, sans-serif';
@@ -20,14 +19,8 @@ export function HydrateFallback() {
 
 export default function WebGLRoute() {
   const [width, setWidth] = useState(800);
-
-  // Prepare once per text; handle is cheap to keep in state.
-  const handle = useMemo(() => prepare(TEXT, FAMILY), []);
-
-  const layout = useMemo(
-    () => layoutFit(handle, { width, maxLines: 3, lineHeight: 1.2, maxSize: 80 }),
-    [handle, width],
-  );
+  const [handle] = useState(() => prepare(TEXT, FAMILY));
+  const layout = layoutFit(handle, { width, maxLines: 3, lineHeight: 1.2, maxSize: 80 });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -80,7 +73,9 @@ export default function WebGLRoute() {
           <group>
             {/* Debug frame so you can see the "container" in world space */}
             <lineSegments>
-              <edgesGeometry args={[new PlaneGeometry(width, layout.height)]} />
+              <edgesGeometry>
+                <planeGeometry args={[width, layout.height]} />
+              </edgesGeometry>
               <lineBasicMaterial color="#2a2a2a" />
             </lineSegments>
             {layout.lines.map((line, i) => (

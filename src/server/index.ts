@@ -122,12 +122,4 @@ export function clearServerCache(): void {
   fluidCache.clear();
 }
 
-export { fit, fluidFit, prepare } from '../core/index.js';
-export type {
-  FitHandle,
-  FitOptions,
-  FitResult,
-  FluidFitOptions,
-  FluidFitResult,
-  PrepareOptions,
-} from '../core/index.js';
+export * from '../core/index.js';

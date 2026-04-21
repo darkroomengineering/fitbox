@@ -138,9 +138,7 @@ export type LayoutFitResult = FitResult & {
 export function layoutFit(target: FitHandle, opts: FitOptions): LayoutFitResult {
   const f = fit(target, opts);
   const { lineHeight = DEFAULT_LINE_HEIGHT, width } = opts;
-  if (width <= 0 || f.fontSize <= 0) {
-    return { ...f, lines: [] };
-  }
+  if (width <= 0) return { ...f, lines: [] };
   // Scaling invariant: layout at 1px with maxWidth (width / fontSize)
   // produces the same wrapping as layout at fontSize with maxWidth (width).
   const raw = layoutWithLines(target.pretext, width / f.fontSize, lineHeight);
@@ -185,13 +183,11 @@ export function fluidFit(
   const sMin = clamp((minViewport * widthFraction) / natural, floor, ceil);
   const sMax = clamp((maxViewport * widthFraction) / natural, floor, ceil);
 
-  const span = Math.max(maxViewport - minViewport, Number.EPSILON);
-  const slope = (sMax - sMin) / span;
+  const slope = (sMax - sMin) / (maxViewport - minViewport);
   const intercept = sMin - slope * minViewport;
 
   const preferred = `calc(${round(intercept)}px + ${round(slope * 100)}vw)`;
-  const [lo, hi] = sMin <= sMax ? [sMin, sMax] : [sMax, sMin];
-  const cssClamp = `clamp(${round(lo)}px, ${preferred}, ${round(hi)}px)`;
+  const cssClamp = `clamp(${round(sMin)}px, ${preferred}, ${round(sMax)}px)`;
 
   return { cssClamp, minSize: sMin, maxSize: sMax, slope, intercept };
 }
