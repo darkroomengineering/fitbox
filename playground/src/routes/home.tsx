@@ -1,4 +1,4 @@
-import { useLoaderData } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { fluidFit, prepare } from 'fitbox';
 import { FitText, useFitText } from 'fitbox/react';
 
@@ -33,7 +33,10 @@ export default function Home() {
       <p className="note">
         Reflow-free text fitting built on{' '}
         <a href="https://github.com/chenglou/pretext">@chenglou/pretext</a>. Drag the
-        right edge of each box to resize.
+        right edge of each box to resize.{' '}
+        <Link to="/webgl" style={{ color: '#9cf' }}>
+          See the WebGL demo →
+        </Link>
       </p>
 
       <h2>Single-line fit (useFitText)</h2>
