@@ -39,7 +39,7 @@ One division. No search. No DOM.
 | Multi-line fit | — | Reflow-free binary search |
 | Fluid CSS | Hand-rolled clamp | Computed `clamp(…)` |
 | SSR | — | Supported via canvas polyfill |
-| Bundle | ~4KB min+gz | ~1.9KB core + ~1.5KB react adapter (min+gz) |
+| Bundle | ~4KB min+gz | ~1.3KB core / ~1.6KB react / ~1.7KB server (min+gz, each entry standalone) |
 
 fitbox is narrower than Fitty in one way — it ships a React adapter, not a plain-DOM binding — and wider in several others. Reach for Fitty if you need plain DOM or are supporting very old browsers. Reach for hand-rolled CSS fluid-typography recipes if you are comfortable guessing at your text's natural width. Reach for fitbox when you want the fit to be exact, to work under SSR, or to disappear into a static CSS string after the first render.
 

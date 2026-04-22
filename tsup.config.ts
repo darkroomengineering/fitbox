@@ -10,5 +10,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   treeshake: true,
+  splitting: false,
+  minify: true,
   external: ['react', '@chenglou/pretext'],
 });
