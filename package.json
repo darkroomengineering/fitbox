@@ -42,7 +42,10 @@
     "playground": "bun --cwd playground dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:fast": "tsgo --noEmit",
+    "lint": "biome check src",
+    "prepare": "husky"
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.5"
@@ -51,14 +54,22 @@
     "react": ">=19.0.0"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true }
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.2",
     "@types/react": "^19.0.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260422.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
     "react": "^19.0.0",
     "tsup": "^8.5.1",
     "typescript": "^5.7.3",
     "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx,js,jsx,json}": ["biome check --write --no-errors-on-unmatched"]
   }
 }
