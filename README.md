@@ -39,7 +39,7 @@ One division. No search. No DOM.
 | Multi-line fit | — | Reflow-free binary search |
 | Fluid CSS | Hand-rolled clamp | Computed `clamp(…)` |
 | SSR | — | Supported via canvas polyfill |
-| Bundle | ~4KB min+gz | ~3KB core + ~3KB react adapter |
+| Bundle | ~4KB min+gz | ~1.9KB core + ~1.5KB react adapter (min+gz) |
 
 fitbox is narrower than Fitty in one way — it ships a React adapter, not a plain-DOM binding — and wider in several others. Reach for Fitty if you need plain DOM or are supporting very old browsers. Reach for hand-rolled CSS fluid-typography recipes if you are comfortable guessing at your text's natural width. Reach for fitbox when you want the fit to be exact, to work under SSR, or to disappear into a static CSS string after the first render.
 
@@ -162,7 +162,7 @@ export default function Home() {
 }
 ```
 
-`fitCached` / `fluidFitCached` memoize in a bounded LRU so repeated calls (nav labels, common strings) don't re-measure.
+`fitCached` / `fluidFitCached` / `fluidFitMultiLineCached` memoize in bounded LRUs so repeated calls (nav labels, common strings) don't re-measure. The multi-line variant is the most expensive call — it runs ~33 binary-search fits per invocation — so caching matters most there.
 
 ## API
 
@@ -185,6 +185,7 @@ export default function Home() {
 - `configureServerCanvas(factory, options?)` — install canvas shim, configure cache.
 - `fitCached(text, family, fitOpts, prepareOpts?)` — cached `prepare + fit`.
 - `fluidFitCached(text, family, fluidOpts, prepareOpts?)` — cached `prepare + fluidFit`.
+- `fluidFitMultiLineCached(text, family, fluidOpts, prepareOpts?)` — cached `prepare + fluidFitMultiLine`.
 - `clearServerCache()`.
 
 ## Caveats
