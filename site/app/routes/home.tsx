@@ -254,6 +254,7 @@ useFrame(({ clock }) => group.current.children.forEach((child, i) => {
           orthographic
           camera={{ position: [0, 0, 100], zoom: 1, near: 0.1, far: 1000 }}
           dpr={[1, 2]}
+          gl={{ antialias: true }}
         >
           <color attach="background" args={['#050505']} />
           <FittedText handle={handle} />
@@ -293,9 +294,11 @@ function FittedText({ handle }: { handle: FitHandle }) {
           anchorX="left"
           anchorY="top"
           color="#fafafa"
-          outlineWidth={layout.fontSize * 0.015}
+          sdfGlyphSize={256}
+          outlineWidth={0}
           outlineColor="#7cf"
-          outlineOpacity={0.55}
+          outlineOpacity={0.6}
+          outlineBlur={layout.fontSize * 0.08}
           position={[-size.width / 2, layout.height / 2 - line.y, 0]}
         >
           {line.text}
