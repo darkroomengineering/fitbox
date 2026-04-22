@@ -1,8 +1,8 @@
 import {
   type CSSProperties,
+  createElement,
   type HTMLAttributes,
   type ReactElement,
-  createElement,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -12,17 +12,16 @@ import {
 } from 'react';
 import {
   DEFAULT_LINE_HEIGHT,
-  fit,
   type FitHandle,
   type FitOptions,
   type FitResult,
   type FluidFitResult,
-  prepare,
+  fit,
   type PrepareOptions,
+  prepare,
 } from '../core/index.js';
 
-const useIsomorphicLayoutEffect =
-  typeof window === 'undefined' ? useEffect : useLayoutEffect;
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
 function resolveFont(el: HTMLElement): string {
   const cs = getComputedStyle(el);
@@ -52,9 +51,7 @@ export type UseFitOptions = Omit<FitOptions, 'width'> & {
  * options) directly — no React re-render per resize frame. Requires
  * React 19+ for the callback-ref cleanup pattern.
  */
-export function useFit(
-  options?: UseFitOptions,
-): (node: HTMLElement | null) => void {
+export function useFit(options?: UseFitOptions): (node: HTMLElement | null) => void {
   const optsRef = useRef(options);
   optsRef.current = options;
 
@@ -131,7 +128,16 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   text: string,
   opts: UseFitTextOptions,
 ): UseFitTextResult<E> {
-  const { family, prepare: prepareOpts, preset, ...fitOpts } = opts;
+  const {
+    family,
+    prepare: prepareOpts,
+    preset,
+    height,
+    maxLines,
+    minSize,
+    maxSize,
+    lineHeight,
+  } = opts;
   const whiteSpace = prepareOpts?.whiteSpace;
   const wordBreak = prepareOpts?.wordBreak;
 
@@ -170,18 +176,18 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
 
   const result = useMemo<FitResult | null>(() => {
     if (!handle || width === null || width <= 0) return preset ?? null;
-    return fit(handle, { ...fitOpts, width });
-  }, [handle, width, preset, fitOpts]);
+    return fit(handle, { width, height, maxLines, minSize, maxSize, lineHeight });
+  }, [handle, width, preset, height, maxLines, minSize, maxSize, lineHeight]);
 
   const style = useMemo<CSSProperties | undefined>(
     () =>
       result
         ? {
             fontSize: `${result.fontSize}px`,
-            lineHeight: fitOpts.lineHeight ?? DEFAULT_LINE_HEIGHT,
+            lineHeight: lineHeight ?? DEFAULT_LINE_HEIGHT,
           }
         : undefined,
-    [result, fitOpts.lineHeight],
+    [result, lineHeight],
   );
 
   return { ref: setElement, style, result };
@@ -210,9 +216,10 @@ const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitOptions> = new Set([
   'lineHeight',
 ]);
 
-function splitProps(
-  rest: Record<string, unknown>,
-): { fitOpts: UseFitOptions; domProps: Record<string, unknown> } {
+function splitProps(rest: Record<string, unknown>): {
+  fitOpts: UseFitOptions;
+  domProps: Record<string, unknown>;
+} {
   const fitOpts = {} as UseFitOptions;
   const domProps: Record<string, unknown> = {};
   for (const key in rest) {
@@ -242,9 +249,5 @@ export function FitText(props: FitTextProps): ReactElement {
     ? { fontSize: `${preset.fontSize}px`, ...styleProp }
     : styleProp;
 
-  return createElement(
-    as,
-    { ...domProps, ref: fitRef, style: initialStyle },
-    children,
-  );
+  return createElement(as, { ...domProps, ref: fitRef, style: initialStyle }, children);
 }
