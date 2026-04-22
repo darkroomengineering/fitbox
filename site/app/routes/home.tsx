@@ -25,18 +25,19 @@ export default function Home() {
 function Hero() {
   return (
     <section className="border-b border-[var(--color-line)] pb-24">
-      <FitText
-        as="h1"
-        maxSize={360}
+      {/* Hero uses a static CSS clamp — SSR-safe, zero JS, zero CLS.
+          Equivalent to what fluidFit would emit for 'fitbox' at system-ui. */}
+      <h1
         style={{
+          margin: 0,
           fontWeight: 700,
           letterSpacing: '-0.04em',
           lineHeight: 0.9,
-          margin: 0,
+          fontSize: 'clamp(72px, 32vw, 360px)',
         }}
       >
         fitbox
-      </FitText>
+      </h1>
       <p className="mt-8 max-w-2xl text-xl leading-relaxed text-[var(--color-muted)]">
         Reflow-free text-to-box fitting for React. Built on{' '}
         <a href="https://github.com/chenglou/pretext">@chenglou/pretext</a>.
@@ -139,13 +140,13 @@ function SingleLineDemo() {
     <DemoFrame
       title="Single-line fit"
       description="Drag the right edge of the box. The closed-form fit solves in one division, no DOM measurement, no search."
-      code={`<FitText maxSize={200}>Hello World</FitText>`}
+      code={`<FitText as="div" maxSize={200}>Hello World</FitText>`}
     >
       <div
         className="resize-x overflow-hidden p-6"
         style={{ minWidth: 160, width: 480 }}
       >
-        <FitText maxSize={200}>Hello World</FitText>
+        <FitText as="div" maxSize={200}>Hello World</FitText>
       </div>
     </DemoFrame>
   );
