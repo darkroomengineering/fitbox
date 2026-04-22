@@ -1,12 +1,16 @@
 import {
+  type FitHandle,
   type FitOptions,
   type FitResult,
+  type FluidFitMultiLineOptions,
+  type FluidFitMultiLineResult,
   type FluidFitOptions,
   type FluidFitResult,
   fit,
   fluidFit,
-  prepare,
+  fluidFitMultiLine,
   type PrepareOptions,
+  prepare,
 } from '../core/index.js';
 
 type CanvasLike = {
@@ -63,6 +67,7 @@ class LRU<V> {
 
 const fitCache = new LRU<FitResult>(DEFAULT_CACHE_MAX);
 const fluidCache = new LRU<FluidFitResult>(DEFAULT_CACHE_MAX);
+const fluidMultiLineCache = new LRU<FluidFitMultiLineResult>(DEFAULT_CACHE_MAX);
 
 export type ConfigureServerCanvasOptions = {
   /** Maximum cache entries per LRU (fit, fluid). Default 1024. */
@@ -86,40 +91,49 @@ export function configureServerCanvas(
   if (options?.cacheMax !== undefined) {
     fitCache.resize(options.cacheMax);
     fluidCache.resize(options.cacheMax);
+    fluidMultiLineCache.resize(options.cacheMax);
   }
 }
 
-export function fitCached(
-  text: string,
-  family: string,
-  fitOpts: FitOptions,
-  prepareOpts?: PrepareOptions,
-): FitResult {
-  const key = JSON.stringify([text, family, fitOpts, prepareOpts ?? null]);
-  const cached = fitCache.get(key);
-  if (cached) return cached;
-  const result = fit(prepare(text, family, prepareOpts), fitOpts);
-  fitCache.set(key, result);
-  return result;
+function makeCached<O, R>(
+  cache: LRU<R>,
+  fn: (handle: FitHandle, opts: O) => R,
+): (text: string, family: string, opts: O, prepareOpts?: PrepareOptions) => R {
+  return (text, family, opts, prepareOpts) => {
+    const key = JSON.stringify([text, family, opts, prepareOpts ?? null]);
+    const cached = cache.get(key);
+    if (cached) return cached;
+    const result = fn(prepare(text, family, prepareOpts), opts);
+    cache.set(key, result);
+    return result;
+  };
 }
 
-export function fluidFitCached(
+export const fitCached: (
   text: string,
   family: string,
-  fluidOpts: FluidFitOptions,
+  opts: FitOptions,
   prepareOpts?: PrepareOptions,
-): FluidFitResult {
-  const key = JSON.stringify([text, family, fluidOpts, prepareOpts ?? null]);
-  const cached = fluidCache.get(key);
-  if (cached) return cached;
-  const result = fluidFit(prepare(text, family, prepareOpts), fluidOpts);
-  fluidCache.set(key, result);
-  return result;
-}
+) => FitResult = makeCached(fitCache, fit);
+
+export const fluidFitCached: (
+  text: string,
+  family: string,
+  opts: FluidFitOptions,
+  prepareOpts?: PrepareOptions,
+) => FluidFitResult = makeCached(fluidCache, fluidFit);
+
+export const fluidFitMultiLineCached: (
+  text: string,
+  family: string,
+  opts: FluidFitMultiLineOptions,
+  prepareOpts?: PrepareOptions,
+) => FluidFitMultiLineResult = makeCached(fluidMultiLineCache, fluidFitMultiLine);
 
 export function clearServerCache(): void {
   fitCache.clear();
   fluidCache.clear();
+  fluidMultiLineCache.clear();
 }
 
 export * from '../core/index.js';
