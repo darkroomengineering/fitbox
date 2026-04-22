@@ -15,10 +15,13 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.1.x
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun x biome check src
 
       - name: Typecheck
         run: bun x tsc --noEmit
