@@ -7,12 +7,8 @@ vi.mock('@chenglou/pretext', () => {
   const charWidth = 0.5;
   return {
     prepareWithSegments: (text: string) => ({ text, charWidth }),
-    measureNaturalWidth: (h: { text: string; charWidth: number }) =>
-      h.text.length * h.charWidth,
-    measureLineStats: (
-      h: { text: string; charWidth: number },
-      maxWidth: number,
-    ) => {
+    measureNaturalWidth: (h: { text: string; charWidth: number }) => h.text.length * h.charWidth,
+    measureLineStats: (h: { text: string; charWidth: number }, maxWidth: number) => {
       // Naively wrap on characters: no word breaks. Good enough for math tests.
       const natural = h.text.length * h.charWidth;
       if (maxWidth >= natural) return { lineCount: 1, maxLineWidth: natural };

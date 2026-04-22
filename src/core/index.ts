@@ -2,8 +2,8 @@ import {
   layoutWithLines,
   measureLineStats,
   measureNaturalWidth,
-  prepareWithSegments,
   type PreparedTextWithSegments,
+  prepareWithSegments,
 } from '@chenglou/pretext';
 
 export const DEFAULT_LINE_HEIGHT = 1.2;
@@ -29,11 +29,7 @@ export type PrepareOptions = {
  * shorthand case the size is normalized to `1px` so the scaling invariant
  * used by `fit` and `layoutFit` still holds.
  */
-export function prepare(
-  text: string,
-  font: string,
-  options?: PrepareOptions,
-): FitHandle {
+export function prepare(text: string, font: string, options?: PrepareOptions): FitHandle {
   const pretext = prepareWithSegments(text, normalizeFontTo1px(font), options);
   return { pretext, naturalWidth: measureNaturalWidth(pretext) };
 }
@@ -85,8 +81,7 @@ export function fit(target: FitHandle, opts: FitOptions): FitResult {
   const probe = (s: number) => {
     const { lineCount } = measureLineStats(target.pretext, width / s);
     const withinLines = maxLines === undefined || lineCount <= maxLines;
-    const withinHeight =
-      height === undefined || lineCount * s * lineHeight <= height;
+    const withinHeight = height === undefined || lineCount * s * lineHeight <= height;
     return { ok: withinLines && withinHeight, lineCount };
   };
 
@@ -181,10 +176,7 @@ export type FluidFitResult = {
   intercept: number;
 };
 
-export function fluidFit(
-  target: FitHandle,
-  opts: FluidFitOptions,
-): FluidFitResult {
+export function fluidFit(target: FitHandle, opts: FluidFitOptions): FluidFitResult {
   const {
     minViewport,
     maxViewport,
