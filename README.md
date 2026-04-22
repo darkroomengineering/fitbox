@@ -123,7 +123,10 @@ const fluid = fluidFit(prepare('Fitbox', 'Inter'), {
   minSize: 24,
   maxSize: 180,
 });
-// fluid.cssClamp === 'clamp(24px, calc(… + …vw), 180px)'
+// fluid.cssClamp === 'clamp(120.755px, calc(103.827px + 5.29vw), 180px)'
+// (bounds are derived: sMin/sMax = clamp(viewport / naturalWidth, minSize, maxSize),
+//  so for short text the floor often lands above your minSize — here 'Fitbox' is wide
+//  enough at 320px viewport that the lower bound is 120.755px, not 24px.)
 
 <FitText fluid={fluid}>Fitbox</FitText>
 ```
