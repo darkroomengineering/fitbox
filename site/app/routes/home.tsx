@@ -2,7 +2,7 @@ import { Text } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useState, type ReactNode } from 'react';
 import { fluidFit, layoutFit, prepare } from '@darkroomengineering/fitbox';
-import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
+import { FitText, useFit } from '@darkroomengineering/fitbox/react';
 
 function ClientOnly({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -135,18 +135,34 @@ function DemoFrame({
   );
 }
 
+const EDITABLE_STYLE: React.CSSProperties = {
+  margin: 0,
+  outline: 'none',
+  cursor: 'text',
+};
+
 function SingleLineDemo() {
   return (
     <DemoFrame
       title="Single-line fit"
-      description="Drag the right edge of the box. The closed-form fit solves in one division, no DOM measurement, no search."
-      code={`<FitText as="div" maxSize={200}>Hello World</FitText>`}
+      description="Drag the right edge to resize. Click the text to edit it — fitbox refits on every keystroke via MutationObserver."
+      code={`<h1 ref={useFit({ maxSize: 200 })} contentEditable>
+  Hello World
+</h1>`}
     >
       <div
         className="resize-x overflow-hidden p-6"
         style={{ minWidth: 160, width: 480 }}
       >
-        <FitText as="div" maxSize={200}>Hello World</FitText>
+        <h1
+          ref={useFit({ maxSize: 200 })}
+          contentEditable
+          suppressContentEditableWarning
+          spellCheck={false}
+          style={EDITABLE_STYLE}
+        >
+          Hello World
+        </h1>
       </div>
     </DemoFrame>
   );
@@ -155,22 +171,25 @@ function SingleLineDemo() {
 function MultiLineDemo() {
   const text =
     'Typography that actually fits its container, without layout thrashing or binary searches over the DOM.';
-  const { ref, style } = useFitText<HTMLParagraphElement>(text, {
-    maxLines: 3,
-    maxSize: 48,
-    lineHeight: 1.2,
-  });
   return (
     <DemoFrame
       title="Multi-line fit"
-      description="maxLines: 3. Binary search uses the same 1px handle — 10 iterations of pure arithmetic, still no DOM."
-      code={`useFitText(text, { maxLines: 3, maxSize: 48 })`}
+      description="maxLines: 3. Click to edit — wrap points, line count, and fontSize all reflow. Still pure arithmetic, no DOM measurement."
+      code={`<p ref={useFit({ maxLines: 3, maxSize: 48 })} contentEditable>
+  {text}
+</p>`}
     >
       <div
         className="flex resize-x items-center overflow-hidden p-6"
         style={{ minWidth: 200, width: 640, minHeight: 160 }}
       >
-        <p ref={ref} style={{ margin: 0, ...style }}>
+        <p
+          ref={useFit({ maxLines: 3, maxSize: 48, lineHeight: 1.2 })}
+          contentEditable
+          suppressContentEditableWarning
+          spellCheck={false}
+          style={EDITABLE_STYLE}
+        >
           {text}
         </p>
       </div>

@@ -3,8 +3,11 @@ import {
   type HTMLAttributes,
   type ReactElement,
   createElement,
+  useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -26,15 +29,89 @@ function resolveFont(el: HTMLElement): string {
   return `${cs.fontStyle} ${cs.fontWeight} 1px ${cs.fontFamily}`;
 }
 
-export type UseFitTextOptions = Omit<FitOptions, 'width'> & {
+export type UseFitOptions = Omit<FitOptions, 'width'> & {
   /**
-   * Font family (or any canvas font shorthand). When omitted, the hook
-   * reads `font-family`, `font-weight`, and `font-style` from the observed
-   * element's computed styles. The element inherits these from ancestors
-   * per normal CSS — most callers need not pass this at all.
+   * Override the font used for measurement. When omitted, the hook reads
+   * `font-family`, `font-weight`, and `font-style` from the element's
+   * computed style — the element inherits these from ancestors via normal
+   * CSS, so most callers need not pass this at all.
    */
   family?: string;
   prepare?: PrepareOptions;
+};
+
+/**
+ * Drop a ref on any block-level element and it will fit its text to the
+ * container, refitting on resize and on text changes.
+ *
+ * @example
+ *   <h1 ref={useFit()}>Hello</h1>
+ *   <p ref={useFit({ maxLines: 3, maxSize: 48 })}>{text}</p>
+ *
+ * The hook mutates `element.style.fontSize` (and `lineHeight` if set in
+ * options) directly — no React re-render per resize frame. Requires
+ * React 19+ for the callback-ref cleanup pattern.
+ */
+export function useFit(
+  options?: UseFitOptions,
+): (node: HTMLElement | null) => void {
+  const optsRef = useRef(options);
+  optsRef.current = options;
+
+  return useCallback((node: HTMLElement | null) => {
+    if (!node) return;
+
+    let handle: FitHandle | null = null;
+    let lastText = '';
+    let cancelled = false;
+
+    const update = () => {
+      if (cancelled) return;
+      const opts = optsRef.current ?? {};
+      const text = node.textContent ?? '';
+      if (text !== lastText) {
+        const font = opts.family ?? resolveFont(node);
+        handle = prepare(text, font, opts.prepare);
+        lastText = text;
+      }
+      if (!handle) return;
+      const width = node.getBoundingClientRect().width;
+      if (width <= 0) return;
+      const { fontSize } = fit(handle, { ...opts, width });
+      node.style.fontSize = `${fontSize}px`;
+      if (opts.lineHeight !== undefined) {
+        node.style.lineHeight = String(opts.lineHeight);
+      }
+    };
+
+    const go = async () => {
+      if (document.fonts.status !== 'loaded') {
+        try {
+          await document.fonts.ready;
+        } catch {
+          // proceed with whatever font is currently available
+        }
+      }
+      update();
+    };
+    go();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(node);
+    const mo = new MutationObserver(update);
+    mo.observe(node, { childList: true, characterData: true, subtree: true });
+
+    return () => {
+      cancelled = true;
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
+}
+
+// --- Escape hatch: the explicit-text, React-styled version ---
+
+export type UseFitTextOptions = UseFitOptions & {
   preset?: FitResult;
 };
 
@@ -44,6 +121,12 @@ export type UseFitTextResult<E extends HTMLElement = HTMLElement> = {
   result: FitResult | null;
 };
 
+/**
+ * Like `useFit`, but takes the text explicitly and returns `{ ref, style,
+ * result }` instead of mutating DOM. Use when you want React to own the
+ * styling (e.g., composing with CSS-in-JS) or when you need the
+ * `FitResult` for downstream logic.
+ */
 export function useFitText<E extends HTMLElement = HTMLElement>(
   text: string,
   opts: UseFitTextOptions,
@@ -57,10 +140,14 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   const [handle, setHandle] = useState<FitHandle | null>(null);
 
   useEffect(() => {
-    if (!element && !family) return; // need the element to read computed font
+    if (!element && !family) return;
     let cancelled = false;
     const run = async () => {
-      if (document.fonts.status !== 'loaded') await document.fonts.ready;
+      if (document.fonts.status !== 'loaded') {
+        try {
+          await document.fonts.ready;
+        } catch {}
+      }
       if (cancelled) return;
       const font = family ?? resolveFont(element!);
       setHandle(prepare(text, font, { whiteSpace, wordBreak }));
@@ -81,32 +168,41 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
     return () => observer.disconnect();
   }, [element]);
 
-  const result =
-    handle && width !== null && width > 0
-      ? fit(handle, { ...fitOpts, width })
-      : (preset ?? null);
+  const result = useMemo<FitResult | null>(() => {
+    if (!handle || width === null || width <= 0) return preset ?? null;
+    return fit(handle, { ...fitOpts, width });
+  }, [handle, width, preset, fitOpts]);
 
-  const style: CSSProperties | undefined = result
-    ? {
-        fontSize: `${result.fontSize}px`,
-        lineHeight: fitOpts.lineHeight ?? DEFAULT_LINE_HEIGHT,
-      }
-    : undefined;
+  const style = useMemo<CSSProperties | undefined>(
+    () =>
+      result
+        ? {
+            fontSize: `${result.fontSize}px`,
+            lineHeight: fitOpts.lineHeight ?? DEFAULT_LINE_HEIGHT,
+          }
+        : undefined,
+    [result, fitOpts.lineHeight],
+  );
 
   return { ref: setElement, style, result };
 }
 
+// --- Component sugar ---
+
 export type FitTextProps = Omit<HTMLAttributes<HTMLElement>, 'children'> &
-  UseFitTextOptions & {
+  UseFitOptions & {
     as?: keyof HTMLElementTagNameMap;
     children: string;
+    /** Static CSS clamp — bypasses the hook entirely, zero JS at runtime. */
     fluid?: FluidFitResult;
+    /** Pre-computed result (e.g. from a server loader) to ship as the
+     *  initial inline fontSize. The hook takes over after hydration. */
+    preset?: FitResult;
   };
 
-const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitTextOptions> = new Set([
+const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitOptions> = new Set([
   'family',
   'prepare',
-  'preset',
   'height',
   'maxLines',
   'minSize',
@@ -116,11 +212,11 @@ const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitTextOptions> = new Set([
 
 function splitProps(
   rest: Record<string, unknown>,
-): { fitOpts: UseFitTextOptions; domProps: Record<string, unknown> } {
-  const fitOpts = {} as UseFitTextOptions;
+): { fitOpts: UseFitOptions; domProps: Record<string, unknown> } {
+  const fitOpts = {} as UseFitOptions;
   const domProps: Record<string, unknown> = {};
   for (const key in rest) {
-    if (FIT_OPTION_KEYS.has(key as keyof UseFitTextOptions)) {
+    if (FIT_OPTION_KEYS.has(key as keyof UseFitOptions)) {
       (fitOpts as Record<string, unknown>)[key] = rest[key];
     } else {
       domProps[key] = rest[key];
@@ -129,51 +225,26 @@ function splitProps(
   return { fitOpts, domProps };
 }
 
-/**
- * When `fluid` is provided, skip the measurement hook entirely — the browser
- * interpolates `clamp()` natively, so we only need to render a plain element.
- * No ResizeObserver, no prepare, no canvas.
- */
-function FluidFitText({
-  as,
-  children,
-  fluid,
-  styleProp,
-  domProps,
-}: {
-  as: keyof HTMLElementTagNameMap;
-  children: string;
-  fluid: FluidFitResult;
-  styleProp: CSSProperties | undefined;
-  domProps: Record<string, unknown>;
-}): ReactElement {
-  const style: CSSProperties = { fontSize: fluid.cssClamp, ...styleProp };
-  return createElement(as, { ...domProps, style }, children);
-}
-
-function DynamicFitText({
-  as,
-  children,
-  fitOpts,
-  styleProp,
-  domProps,
-}: {
-  as: keyof HTMLElementTagNameMap;
-  children: string;
-  fitOpts: UseFitTextOptions;
-  styleProp: CSSProperties | undefined;
-  domProps: Record<string, unknown>;
-}): ReactElement {
-  const hook = useFitText(children, fitOpts);
-  const style: CSSProperties = { ...hook.style, ...styleProp };
-  return createElement(as, { ...domProps, ref: hook.ref, style }, children);
-}
-
 export function FitText(props: FitTextProps): ReactElement {
-  const { as = 'div', children, fluid, style: styleProp, ...rest } = props;
+  const { as = 'div', children, fluid, preset, style: styleProp, ...rest } = props;
   const { fitOpts, domProps } = splitProps(rest as Record<string, unknown>);
+  const fitRef = useFit(fitOpts);
 
-  return fluid
-    ? createElement(FluidFitText, { as, children, fluid, styleProp, domProps })
-    : createElement(DynamicFitText, { as, children, fitOpts, styleProp, domProps });
+  if (fluid) {
+    return createElement(
+      as,
+      { ...domProps, style: { fontSize: fluid.cssClamp, ...styleProp } },
+      children,
+    );
+  }
+
+  const initialStyle: CSSProperties | undefined = preset
+    ? { fontSize: `${preset.fontSize}px`, ...styleProp }
+    : styleProp;
+
+  return createElement(
+    as,
+    { ...domProps, ref: fitRef, style: initialStyle },
+    children,
+  );
 }

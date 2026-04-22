@@ -1,6 +1,6 @@
 import { Link, useLoaderData } from 'react-router';
 import { fluidFit, prepare } from '@darkroomengineering/fitbox';
-import { FitText, useFitText } from '@darkroomengineering/fitbox/react';
+import { FitText, useFit } from '@darkroomengineering/fitbox/react';
 
 // Client loader — runs after hydration, has window.document for canvas.
 // We compute fluid CSS here rather than server-side to avoid needing a
@@ -15,7 +15,6 @@ export async function clientLoader() {
   });
   return { fluid };
 }
-
 clientLoader.hydrate = true as const;
 
 export function HydrateFallback() {
@@ -24,7 +23,6 @@ export function HydrateFallback() {
 
 export default function Home() {
   const { fluid } = useLoaderData<typeof clientLoader>();
-
   return (
     <main>
       <h1 style={{ margin: 0 }}>fitbox demo</h1>
@@ -37,7 +35,7 @@ export default function Home() {
         </Link>
       </p>
 
-      <h2>Single-line fit (useFitText)</h2>
+      <h2>Single-line fit (useFit)</h2>
       <SingleLineDemo />
 
       <h2>Multi-line fit (maxLines: 3)</h2>
@@ -55,9 +53,9 @@ export default function Home() {
 function SingleLineDemo() {
   return (
     <div className="box resize" style={{ width: 480 }}>
-      <FitText maxSize={200}>
+      <h1 ref={useFit({ maxSize: 200 })} style={{ margin: 0 }}>
         Hello World
-      </FitText>
+      </h1>
     </div>
   );
 }
@@ -65,17 +63,15 @@ function SingleLineDemo() {
 function MultiLineDemo() {
   const text =
     'Typography that actually fits its container, without layout thrashing or binary searches over the DOM.';
-  const { ref, style } = useFitText<HTMLParagraphElement>(text, {
-    maxLines: 3,
-    maxSize: 48,
-    lineHeight: 1.15,
-  });
   return (
     <div
       className="box resize"
       style={{ width: 640, minHeight: 100, display: 'flex', alignItems: 'center' }}
     >
-      <p ref={ref} style={{ margin: 0, ...style }}>
+      <p
+        ref={useFit({ maxLines: 3, maxSize: 48, lineHeight: 1.15 })}
+        style={{ margin: 0 }}
+      >
         {text}
       </p>
     </div>
@@ -98,8 +94,6 @@ function FluidDemo({ fluid }: { fluid: ReturnType<typeof fluidFit> }) {
 }
 
 function PresetDemo() {
-  // In a real SSR setup this would come from a server loader using
-  // fitbox/server. Here we fake a preset to demo the API.
   const preset = { fontSize: 72, lineCount: 1, height: 72 * 1.2 };
   return (
     <div className="box">

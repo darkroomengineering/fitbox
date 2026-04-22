@@ -65,23 +65,25 @@ Those numbers feed directly into a WebGL/WebGPU text renderer (troika-three-text
 bun add @darkroomengineering/fitbox
 ```
 
-## Client hook
+## `useFit` — drop a ref on any element
 
 ```tsx
-import { useFitText } from '@darkroomengineering/fitbox/react';
+import { useFit } from '@darkroomengineering/fitbox/react';
 
-function Headline({ text }: { text: string }) {
-  const { ref, style } = useFitText<HTMLHeadingElement>(text, {
-    maxLines: 2,
-    maxSize: 120,
-  });
-  return <h1 ref={ref} style={style}>{text}</h1>;
-}
+<h1 ref={useFit()}>Hello</h1>
+<p ref={useFit({ maxLines: 3, maxSize: 48 })}>{text}</p>
 ```
 
-The hook reads `font-family`, `font-weight`, and `font-style` from the element's computed styles — no need to pass `family` unless you want to override. A `ResizeObserver` drives refits; `document.fonts.ready` gates first measurement so metrics aren't taken against a fallback font.
+That's the whole API for the common case. The hook reads `textContent` and the element's computed `font-family`/`font-weight`/`font-style`, runs `prepare` once, then mutates `element.style.fontSize` directly — no React re-render per resize frame, no `style` prop to merge.
 
-## `<FitText>`
+- A `ResizeObserver` refits on container resize.
+- A `MutationObserver` refits when the text changes (so `<p ref={useFit()}>{dynamic}</p>` works).
+- `document.fonts.ready` gates first measurement.
+- Requires React 19+ (uses the callback-ref cleanup pattern).
+
+## `<FitText>` — component sugar
+
+For the cases where a component wrapper is tidier:
 
 ```tsx
 import { FitText } from '@darkroomengineering/fitbox/react';
@@ -89,6 +91,22 @@ import { FitText } from '@darkroomengineering/fitbox/react';
 <FitText maxLines={3} as="h1">
   Typography that actually fits its container.
 </FitText>
+```
+
+Internally uses `useFit`. Also accepts `fluid={…}` for static-clamp CSS and `preset={…}` for SSR-shipped initial sizes.
+
+## `useFitText` — explicit text + React-styled
+
+Escape hatch when you want React to own the styling (CSS-in-JS composition, or you need the full `FitResult` for downstream logic):
+
+```tsx
+import { useFitText } from '@darkroomengineering/fitbox/react';
+
+const { ref, style, result } = useFitText<HTMLHeadingElement>(text, {
+  maxLines: 2,
+  maxSize: 120,
+});
+return <h1 ref={ref} style={style}>{text}</h1>;
 ```
 
 ## Fluid CSS — no JS at runtime
@@ -140,7 +158,7 @@ import { useLoaderData } from 'react-router';
 
 export default function Home() {
   const { title } = useLoaderData();
-  return <FitText family="Inter" preset={title}>Hello</FitText>;
+  return <FitText preset={title}>Hello</FitText>;
 }
 ```
 
@@ -158,7 +176,8 @@ export default function Home() {
 
 ### `@darkroomengineering/fitbox/react`
 
-- `useFitText<E>(text, options)` — returns `{ ref, style, result }`.
+- `useFit(options?)` — callback ref. Fits `textContent` to container, mutates `style.fontSize` directly. The primary one-liner.
+- `useFitText<E>(text, options)` — returns `{ ref, style, result }`. Escape hatch when you want React to own styling or need the raw `FitResult`.
 - `<FitText>` — element wrapper. Accepts `as`, `preset`, `fluid`.
 
 ### `@darkroomengineering/fitbox/server`

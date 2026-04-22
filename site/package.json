@@ -9,7 +9,7 @@
     "typecheck": "react-router typegen && tsc --noEmit"
   },
   "dependencies": {
-    "@darkroomengineering/fitbox": "^0.1.0",
+    "@darkroomengineering/fitbox": "^0.2.0",
     "@react-router/node": "^7.9.0",
     "@react-router/serve": "^7.9.0",
     "@react-three/drei": "^10.7.7",
