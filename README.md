@@ -4,6 +4,16 @@ Reflow-free text-to-box fitting for React, built on [`@chenglou/pretext`](https:
 
 ---
 
+## Features
+
+- Reflow-free text fitting, measuring with `canvas.measureText()` instead of `getBoundingClientRect()`
+- Single-line fit in closed form (`fontSize = W / w1`), no DOM search
+- Multi-line fit via a reflow-free binary search to pixel precision
+- Emits static fluid CSS `clamp(...)`, with zero runtime JS after first paint
+- SSR-ready through a canvas polyfill, with no layout shift
+- Rendering-backend-agnostic layout for WebGL/WebGPU, Canvas, SVG, or PDF
+- ~1.3KB core / ~1.6KB React adapter (min+gz)
+
 ## Why this exists
 
 If you have ever used [Fitty](https://github.com/rikschennink/fitty) or written your own "shrink text to container" logic, you know the shape of it: pick a font-size, put the element in the DOM, read `getBoundingClientRect()`, compare to the container, adjust, read again. The loop terminates quickly — five to ten iterations — but every read forces a layout reflow. Drag a window with twenty fittable headings on the page and you are asking the browser's layout engine to recompute itself thousands of times a second.
