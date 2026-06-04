@@ -6,13 +6,13 @@ Reflow-free text-to-box fitting for React, built on [`@chenglou/pretext`](https:
 
 ## Features
 
-- Reflow-free text fitting, measuring with `canvas.measureText()` instead of `getBoundingClientRect()`
-- Single-line fit in closed form (`fontSize = W / w1`), no DOM search
-- Multi-line fit via a reflow-free binary search to pixel precision
-- Emits static fluid CSS `clamp(...)`, with zero runtime JS after first paint
-- SSR-ready through a canvas polyfill, with no layout shift
-- Rendering-backend-agnostic layout for WebGL/WebGPU, Canvas, SVG, or PDF
-- ~1.3KB core / ~1.6KB React adapter (min+gz)
+- **Reflow-free measurement** — uses canvas.measureText(), never getBoundingClientRect(), so it never thrashes layout
+- **Closed-form single line** — single-line fit is fontSize = W / w1, with no DOM search
+- **Reflow-free multi-line** — multi-line fit is a binary search to pixel precision, still pure arithmetic
+- **Static fluid CSS** — emits a clamp() so the responsive curve runs with zero runtime JS
+- **SSR-ready** — computes on a server canvas polyfill and hydrates with no layout shift
+- **Backend-agnostic** — the layout feeds WebGL/WebGPU, Canvas, SVG, or PDF, not just the DOM
+- **Tiny** — around 1.3KB core and 1.6KB for the React adapter, min+gz
 
 ## Why this exists
 
