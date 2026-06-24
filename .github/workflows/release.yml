@@ -6,6 +6,13 @@ name: Release
 # publish to npm, and create + push the tag. Pushes that don't bump the
 # version are a cheap no-op. To cut a release: bump `version` (and CHANGELOG)
 # in a PR and merge it.
+#
+# Auth is npm Trusted Publishing (OIDC) — no NPM_TOKEN. GitHub Actions mints a
+# short-lived OIDC token (id-token: write) that npm trades for publish rights,
+# so there is no long-lived secret for 2FA to gate (this is what fixed EOTP).
+# One-time setup on npmjs.com: the package's Trusted Publishers must list this
+# repo (darkroomengineering/fitbox) and workflow file (release.yml).
+# Provenance is attached automatically under trusted publishing.
 
 on:
   push:
@@ -22,7 +29,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write # create and push the version tag
-      id-token: write # npm provenance
+      id-token: write # OIDC token for npm trusted publishing (+ provenance)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -70,16 +77,15 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Publish to npm
+      # Trusted publishing needs a recent npm; Node 22 ships npm 10.x, which
+      # predates OIDC support.
+      - name: Upgrade npm for OIDC
         if: steps.check.outputs.publish == 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "${NODE_AUTH_TOKEN}" ]; then
-            echo "::error::NPM_TOKEN secret is not set — cannot publish. Add an npm automation token under repo Settings → Secrets and variables → Actions."
-            exit 1
-          fi
-          npm publish --provenance --access public
+        run: npm install -g npm@latest
+
+      - name: Publish to npm (OIDC trusted publishing)
+        if: steps.check.outputs.publish == 'true'
+        run: npm publish --access public
 
       - name: Tag the release
         if: steps.check.outputs.publish == 'true'
