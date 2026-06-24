@@ -12,7 +12,7 @@ Reflow-free text-to-box fitting for React, built on [`@chenglou/pretext`](https:
 - **Static fluid CSS** — emits a clamp() so the responsive curve runs with zero runtime JS
 - **SSR-ready** — computes on a server canvas polyfill and hydrates with no layout shift
 - **Backend-agnostic** — the layout feeds WebGL/WebGPU, Canvas, SVG, or PDF, not just the DOM
-- **Tiny** — around 1.3KB core and 1.6KB for the React adapter, min+gz
+- **Tiny** — around 1.25KB core and 1.5KB for the React adapter, min+gz
 
 ## Why this exists
 
@@ -49,7 +49,7 @@ One division. No search. No DOM.
 | Multi-line fit | — | Reflow-free binary search |
 | Fluid CSS | Hand-rolled clamp | Computed `clamp(…)` |
 | SSR | — | Supported via canvas polyfill |
-| Bundle | ~4KB min+gz | ~1.3KB core / ~1.6KB react / ~1.7KB server (min+gz, each entry standalone) |
+| Bundle | ~4KB min+gz | ~1.25KB core / ~1.5KB react / ~1.65KB server (min+gz, each entry standalone) |
 
 fitbox is narrower than Fitty in one way — it ships a React adapter, not a plain-DOM binding — and wider in several others. Reach for Fitty if you need plain DOM or are supporting very old browsers. Reach for hand-rolled CSS fluid-typography recipes if you are comfortable guessing at your text's natural width. Reach for fitbox when you want the fit to be exact, to work under SSR, or to disappear into a static CSS string after the first render.
 
