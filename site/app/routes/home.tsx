@@ -41,8 +41,13 @@ function Hero() {
         fitbox
       </h1>
       <p className="mt-8 max-w-2xl text-xl leading-relaxed text-[var(--color-muted)]">
-        Reflow-free text-to-box fitting for React. Built on{' '}
-        <a href="https://github.com/chenglou/pretext">@chenglou/pretext</a>.
+        Reflow-free text-to-box fitting for React.
+      </p>
+      <p className="mt-4 max-w-2xl text-lg leading-relaxed text-[var(--color-muted)]">
+        <a href="https://github.com/chenglou/pretext">Pretext</a> measures how text lays out. fitbox
+        solves the inverse: give it a box and it finds the font-size that fits — closed-form for a
+        single line, a reflow-free binary search for many, or a static <code>clamp()</code> with
+        zero runtime JS.
       </p>
       <div className="mt-6 flex gap-6 text-sm text-[var(--color-muted)]">
         <a href="https://github.com/darkroomengineering/fitbox">GitHub</a>
