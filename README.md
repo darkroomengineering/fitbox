@@ -75,6 +75,32 @@ Those numbers feed directly into a WebGL/WebGPU text renderer (troika-three-text
 bun add @darkroomengineering/fitbox
 ```
 
+## Reach for CSS first, JS only when you must
+
+A common first reaction is "sizing text with JavaScript isn't ideal — can't it be CSS?" For the most common case, **it is CSS**. fitbox computes the fit **once** (at build or load time) and emits a static `clamp()` that the browser interpolates for free — no `ResizeObserver`, no per-frame JS, no layout shift:
+
+```tsx
+import { prepare, fluidFit } from '@darkroomengineering/fitbox';
+import { FitText } from '@darkroomengineering/fitbox/react';
+
+// computed once; ships as a static string
+const fluid = fluidFit(prepare('Headline', 'Inter'), { minViewport: 320, maxViewport: 1440 });
+
+<FitText fluid={fluid}>Headline</FitText>
+// → <div style="font-size: clamp(…)"> — zero runtime JS
+```
+
+JavaScript measurement only earns its place when a static curve *can't* know the answer ahead of time — an exact per-element fit, or text that changes at runtime. Pick by what your text is:
+
+| Your text is… | Use | Runtime cost |
+|---|---|---|
+| A responsive heading, sized by viewport | `fluidFit` + `<FitText fluid>` | **zero JS** — static `clamp()` |
+| Wrapping, sized by viewport | `fluidFitMultiLine` | **zero JS** — `@media` clamps |
+| An exact fit to a specific container, or dynamic/user text | `useFit` / `<FitText>` | measures on resize (still reflow-free) |
+| SSR, no layout shift | `fitCached` + `preset` | server-computed, hydrates static |
+
+Units, everywhere: `minSize` / `maxSize` are **px** (`maxSize: 48` means never larger than 48px), viewports are px, and `lineHeight` is a unitless multiplier like CSS — never px.
+
 ## `useFit` — drop a ref on any element
 
 ```tsx
@@ -82,6 +108,7 @@ import { useFit } from '@darkroomengineering/fitbox/react';
 
 <h1 ref={useFit()}>Hello</h1>
 <p ref={useFit({ maxLines: 3, maxSize: 48 })}>{text}</p>
+// maxSize/minSize are px → here the text never grows past 48px
 ```
 
 That's the whole API for the common case. The hook reads `textContent` and the element's computed `font-family`/`font-weight`/`font-style`, runs `prepare` once, then mutates `element.style.fontSize` directly — no React re-render per resize frame, no `style` prop to merge.
@@ -182,7 +209,7 @@ export default function Home() {
 ### `@darkroomengineering/fitbox`
 
 - `prepare(text, fontFamily, options?)` — build a 1px Pretext handle.
-- `fit(handle, { width, height?, maxLines?, minSize?, maxSize?, lineHeight? })` — closed-form single-line or binary-search multi-line.
+- `fit(handle, { width, height?, maxLines?, minSize?, maxSize?, lineHeight? })` — closed-form single-line or binary-search multi-line. `width`/`height`/`minSize`/`maxSize` are px; `lineHeight` is a unitless multiplier.
 - `layoutFit(handle, fitOpts)` — same as `fit`, plus `lines: Array<{ text, width, y }>` for non-DOM renderers (WebGL, WebGPU, Canvas, SVG).
 - `fluidFit(handle, { minViewport, maxViewport, widthFraction?, minSize?, maxSize? })` — single-line CSS clamp.
 - `fluidFitMultiLine(handle, { …, maxLines, samples?, selector? })` — piecewise `@media` stylesheet for wrapping text.

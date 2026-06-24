@@ -9,10 +9,15 @@ import {
 } from './fit.js';
 
 export type FluidFitOptions = {
+  /** Lower end of the responsive viewport range, in px (e.g. 320). */
   minViewport: number;
+  /** Upper end of the responsive viewport range, in px (e.g. 1440). */
   maxViewport: number;
+  /** Fraction of the viewport the text spans, 0–1. Default 1 (full width). */
   widthFraction?: number;
+  /** Lower bound on font-size, in **px**. Default 1. */
   minSize?: number;
+  /** Upper bound on font-size, in **px**. Default 10000. */
   maxSize?: number;
 };
 

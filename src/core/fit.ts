@@ -40,11 +40,17 @@ function normalizeFontTo1px(font: string): string {
 }
 
 export type FitOptions = {
+  /** Container width to fit the text into, in px. */
   width: number;
+  /** Optional container height cap, in px. When set, the fit also shrinks to stay within this height. */
   height?: number;
+  /** Cap on wrapped line count. Omit (with no `height`) for an unconstrained single-line fit. */
   maxLines?: number;
+  /** Lower bound on the resulting font-size, in **px**. Default 1. */
   minSize?: number;
+  /** Upper bound on the resulting font-size, in **px** (e.g. `maxSize: 48` → never larger than 48px). Default 10000. */
   maxSize?: number;
+  /** Line-height as a unitless multiplier, like CSS `line-height: 1.2` — not px. Default 1.2. */
   lineHeight?: number;
 };
 
