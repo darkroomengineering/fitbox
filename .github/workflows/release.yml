@@ -1,47 +1,90 @@
 name: Release
 
+# Publishing is driven by the version in package.json, not by manual tags.
+# On every push to main we check whether the current version has already been
+# released (i.e. a matching `vX.Y.Z` tag exists). If not, we run the gates,
+# publish to npm, and create + push the tag. Pushes that don't bump the
+# version are a cheap no-op. To cut a release: bump `version` (and CHANGELOG)
+# in a PR and merge it.
+
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+
+# Serialize releases so two quick merges can't race on publish/tag.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
-      id-token: write
+      contents: write # create and push the version tag
+      id-token: write # npm provenance
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full history + existing tags
+
+      - name: Resolve version
+        id: meta
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Has this version already been released?
+        id: check
+        run: |
+          if git rev-parse -q --verify "refs/tags/v${{ steps.meta.outputs.version }}" >/dev/null; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "v${{ steps.meta.outputs.version }} is already tagged — nothing to release."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "v${{ steps.meta.outputs.version }} is new — releasing."
+          fi
 
       - uses: oven-sh/setup-bun@v2
+        if: steps.check.outputs.publish == 'true'
         with:
           bun-version: latest
 
       - name: Install dependencies
+        if: steps.check.outputs.publish == 'true'
         run: bun install --frozen-lockfile
 
       - name: Typecheck
+        if: steps.check.outputs.publish == 'true'
         run: bun x tsc --noEmit
 
       - name: Test
+        if: steps.check.outputs.publish == 'true'
         run: bun x vitest run
 
       - name: Build
+        if: steps.check.outputs.publish == 'true'
         run: bun run build
 
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.publish == 'true'
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
       - name: Publish to npm
+        if: steps.check.outputs.publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "${NODE_AUTH_TOKEN}" ]; then
-            echo "NPM_TOKEN not set — skipping publish (manual publish expected)."
-            exit 0
+            echo "::error::NPM_TOKEN secret is not set — cannot publish. Add an npm automation token under repo Settings → Secrets and variables → Actions."
+            exit 1
           fi
           npm publish --provenance --access public
+
+      - name: Tag the release
+        if: steps.check.outputs.publish == 'true'
+        env:
+          TAG: v${{ steps.meta.outputs.version }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"
