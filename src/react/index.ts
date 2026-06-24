@@ -28,6 +28,22 @@ function resolveFont(el: HTMLElement): string {
   return `${cs.fontStyle} ${cs.fontWeight} 1px ${cs.fontFamily}`;
 }
 
+/**
+ * Best-effort wait for web fonts to finish loading before measuring, so the
+ * fit reflects the real glyph metrics rather than the fallback font. Resolves
+ * immediately when fonts are already loaded, or when there is no document
+ * (SSR). Shared by `useFit` and `useFitText` — the one piece of lifecycle
+ * both genuinely have in common.
+ */
+async function awaitFontsReady(): Promise<void> {
+  if (typeof document === 'undefined' || document.fonts.status === 'loaded') return;
+  try {
+    await document.fonts.ready;
+  } catch {
+    // proceed with whatever font is currently available
+  }
+}
+
 export type UseFitOptions = Omit<FitOptions, 'width'> & {
   /**
    * Override the font used for measurement. When omitted, the hook reads
@@ -82,13 +98,7 @@ export function useFit(options?: UseFitOptions): (node: HTMLElement | null) => v
     };
 
     const go = async () => {
-      if (document.fonts.status !== 'loaded') {
-        try {
-          await document.fonts.ready;
-        } catch {
-          // proceed with whatever font is currently available
-        }
-      }
+      await awaitFontsReady();
       update();
     };
     go();
@@ -149,11 +159,7 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
     if (!element && !family) return;
     let cancelled = false;
     const run = async () => {
-      if (document.fonts.status !== 'loaded') {
-        try {
-          await document.fonts.ready;
-        } catch {}
-      }
+      await awaitFontsReady();
       if (cancelled) return;
       const font = family ?? resolveFont(element!);
       setHandle(prepare(text, font, { whiteSpace, wordBreak }));
@@ -206,36 +212,33 @@ export type FitTextProps = Omit<HTMLAttributes<HTMLElement>, 'children'> &
     preset?: FitResult;
   };
 
-const FIT_OPTION_KEYS: ReadonlySet<keyof UseFitOptions> = new Set([
-  'family',
-  'prepare',
-  'height',
-  'maxLines',
-  'minSize',
-  'maxSize',
-  'lineHeight',
-]);
-
-function splitProps(rest: Record<string, unknown>): {
-  fitOpts: UseFitOptions;
-  domProps: Record<string, unknown>;
-} {
-  const fitOpts = {} as UseFitOptions;
-  const domProps: Record<string, unknown> = {};
-  for (const key in rest) {
-    if (FIT_OPTION_KEYS.has(key as keyof UseFitOptions)) {
-      (fitOpts as Record<string, unknown>)[key] = rest[key];
-    } else {
-      domProps[key] = rest[key];
-    }
-  }
-  return { fitOpts, domProps };
-}
-
 export function FitText(props: FitTextProps): ReactElement {
-  const { as = 'div', children, fluid, preset, style: styleProp, ...rest } = props;
-  const { fitOpts, domProps } = splitProps(rest as Record<string, unknown>);
-  const fitRef = useFit(fitOpts);
+  const {
+    as = 'div',
+    children,
+    fluid,
+    preset,
+    style: styleProp,
+    // Fit options — destructured out so the rest is purely DOM props. TS
+    // already knows this split; no runtime key set or casts needed.
+    family,
+    prepare: prepareOpts,
+    height,
+    maxLines,
+    minSize,
+    maxSize,
+    lineHeight,
+    ...domProps
+  } = props;
+  const fitRef = useFit({
+    family,
+    prepare: prepareOpts,
+    height,
+    maxLines,
+    minSize,
+    maxSize,
+    lineHeight,
+  });
 
   if (fluid) {
     return createElement(
