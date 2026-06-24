@@ -71,5 +71,8 @@
   },
   "lint-staged": {
     "src/**/*.{ts,tsx,js,jsx,json}": ["biome check --write --no-errors-on-unmatched"]
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
   }
 }
