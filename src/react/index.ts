@@ -13,47 +13,18 @@ import {
 import {
   DEFAULT_LINE_HEIGHT,
   type FitHandle,
-  type FitOptions,
   type FitResult,
   type FluidFitResult,
   fit,
-  type PrepareOptions,
   prepare,
-} from '../core/index.js';
+} from '../core/index';
+import { awaitFontsReady, resolveFont, type UseFitOptions, type UseFitTextOptions, type UseFitTextResult as _UseFitTextResult } from '../shared/index';
+
+export { type UseFitOptions, type UseFitTextOptions } from '../shared/index';
+
+export type UseFitTextResult<E extends HTMLElement = HTMLElement> = _UseFitTextResult<CSSProperties, E>
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
-
-function resolveFont(el: HTMLElement): string {
-  const cs = getComputedStyle(el);
-  return `${cs.fontStyle} ${cs.fontWeight} 1px ${cs.fontFamily}`;
-}
-
-/**
- * Best-effort wait for web fonts to finish loading before measuring, so the
- * fit reflects the real glyph metrics rather than the fallback font. Resolves
- * immediately when fonts are already loaded, or when there is no document
- * (SSR). Shared by `useFit` and `useFitText` — the one piece of lifecycle
- * both genuinely have in common.
- */
-async function awaitFontsReady(): Promise<void> {
-  if (typeof document === 'undefined' || document.fonts.status === 'loaded') return;
-  try {
-    await document.fonts.ready;
-  } catch {
-    // proceed with whatever font is currently available
-  }
-}
-
-export type UseFitOptions = Omit<FitOptions, 'width'> & {
-  /**
-   * Override the font used for measurement. When omitted, the hook reads
-   * `font-family`, `font-weight`, and `font-style` from the element's
-   * computed style — the element inherits these from ancestors via normal
-   * CSS, so most callers need not pass this at all.
-   */
-  family?: string;
-  prepare?: PrepareOptions;
-};
 
 /**
  * Drop a ref on any block-level element and it will fit its text to the
@@ -117,16 +88,6 @@ export function useFit(options?: UseFitOptions): (node: HTMLElement | null) => v
 }
 
 // --- Escape hatch: the explicit-text, React-styled version ---
-
-export type UseFitTextOptions = UseFitOptions & {
-  preset?: FitResult;
-};
-
-export type UseFitTextResult<E extends HTMLElement = HTMLElement> = {
-  ref: (node: E | null) => void;
-  style: CSSProperties | undefined;
-  result: FitResult | null;
-};
 
 /**
  * Like `useFit`, but takes the text explicitly and returns `{ ref, style,

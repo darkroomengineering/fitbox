@@ -1,0 +1,337 @@
+/** @jsxImportSource solid-js */
+import { useFit } from "@darkroomengineering/fitbox/solid";
+import { clientOnly } from "@solidjs/start";
+import type { JSX } from "solid-js";
+import DemoFrame from "~/components/DemoFrame";
+const FluidDemo = clientOnly(() => import("~/components/FluidDemo"));
+// const WebGLDemo = clientOnly(() => import("~/components/WebGLDemo"));
+
+export default function Home() {
+  return (
+    <main class="mx-auto max-w-5xl px-6 py-16">
+      <Hero />
+      <Why />
+      <Demos />
+      <Install />
+      <Footer />
+    </main>
+  );
+}
+
+function Hero() {
+  return (
+    <section class="border-b border-[var(--color-line)] pb-24">
+      {/* Hero uses a static CSS clamp — SSR-safe, zero JS, zero CLS.
+          Equivalent to what fluidFit would emit for 'fitbox' at system-ui. */}
+      <h1
+        style={{
+          margin: 0,
+          "font-weight": 700,
+          "letter-spacing": "-0.04em",
+          "line-height": 0.9,
+          "font-size": "clamp(72px, 32vw, 360px)",
+        }}
+      >
+        fitbox
+      </h1>
+      <p class="mt-8 max-w-2xl text-xl leading-relaxed text-[var(--color-muted)]">
+        Reflow-free text-to-box fitting for SolidJS.
+      </p>
+      <p class="mt-4 max-w-2xl text-lg leading-relaxed text-[var(--color-muted)]">
+        <a href="https://github.com/chenglou/pretext">Pretext</a> measures how
+        text lays out. fitbox solves the inverse: give it a box and it finds the
+        font-size that fits — closed-form for a single line, a reflow-free
+        binary search for many, or a static <code>clamp()</code> with zero
+        runtime JS.
+      </p>
+      <div class="mt-6 flex gap-6 text-sm text-[var(--color-muted)]">
+        <a href="https://github.com/darkroomengineering/fitbox">GitHub</a>
+        <a href="https://www.npmjs.com/package/@darkroomengineering/fitbox">
+          npm
+        </a>
+        <a href="#why">Why</a>
+        <a href="#demos">Demos</a>
+        <a href="#install">Install</a>
+      </div>
+    </section>
+  );
+}
+
+function Why() {
+  return (
+    <section id="why" class="border-b border-[var(--color-line)] py-24">
+      <h2 class="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+        Why
+      </h2>
+      <div class="mt-6 max-w-3xl space-y-6 text-lg leading-relaxed">
+        <p>
+          Libraries like{" "}
+          <a href="https://github.com/rikschennink/fitty">Fitty</a> fit text to
+          a container by measuring the DOM — put the text in, read{" "}
+          <code>getBoundingClientRect</code>, adjust, repeat. Every read forces
+          the browser to reflow the page. Twenty headings on a resizing window
+          means thousands of reflows per second.
+        </p>
+        <p>
+          <a href="https://github.com/chenglou/pretext">Pretext</a> measures
+          text through <code>canvas.measureText</code>, which doesn't reflow.
+          With per-glyph widths cached, measuring a wrapped paragraph is
+          microseconds of arithmetic.
+        </p>
+        <p>
+          When measurement stops touching layout, the algorithm collapses.
+          Single-line fit becomes a closed form (
+          <code>fontSize = width / naturalWidth</code>). Multi-line fit becomes
+          a binary search over pure arithmetic. Responsive fit becomes a static{" "}
+          <code>clamp()</code> CSS string — zero JavaScript at runtime. And
+          because nothing depends on the DOM, the fit works equally well in SSR,
+          in Canvas, in WebGL, in SVG.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function Demos() {
+  return (
+    <section
+      id="demos"
+      class="space-y-20 border-b border-[var(--color-line)] py-24"
+    >
+      <h2 class="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+        Demos
+      </h2>
+
+      <SingleLineDemo />
+      <MultiLineDemo />
+      <FluidDemo
+        fallback={
+          <DemoFrame
+            title="Fluid CSS clamp — zero JS at runtime"
+            description="Loading…"
+            code=""
+          >
+            {null}
+          </DemoFrame>
+        }
+      />
+      {/*<WebGLDemo
+        fallback={
+          <DemoFrame
+            title="Beyond the DOM — WebGL"
+            description="Loading…"
+            code=""
+          >
+            {null}
+          </DemoFrame>
+        }
+      />*/}
+    </section>
+  );
+}
+
+const EDITABLE_STYLE: JSX.CSSProperties = {
+  margin: 0,
+  outline: "none",
+  cursor: "text",
+};
+
+function SingleLineDemo() {
+  return (
+    <DemoFrame
+      title="Single-line fit"
+      description="Drag the right edge to resize. Click the text to edit it — fitbox refits on every keystroke via MutationObserver."
+      code={`<h1 ref={useFit({ maxSize: 200 })} contentEditable>
+  Hello World
+</h1>`}
+    >
+      <div
+        class="resize-x overflow-hidden p-6"
+        style={{ "min-width": "160px", width: "480px" }}
+      >
+        <h1
+          ref={useFit({ maxSize: 200 })}
+          contentEditable
+          spellcheck={false}
+          style={EDITABLE_STYLE}
+        >
+          Hello World
+        </h1>
+      </div>
+    </DemoFrame>
+  );
+}
+
+function MultiLineDemo() {
+  const text =
+    "Typography that actually fits its container, without layout thrashing or binary searches over the DOM.";
+  return (
+    <DemoFrame
+      title="Multi-line fit"
+      description="maxLines: 3. Click to edit — wrap points, line count, and fontSize all reflow. Still pure arithmetic, no DOM measurement."
+      code={`<p ref={useFit({ maxLines: 3, maxSize: 48 })} contentEditable>
+  {text}
+</p>`}
+    >
+      <div
+        class="flex resize-x items-center overflow-hidden p-6"
+        style={{ "min-width": "200px", width: "640px", "min-height": "160px" }}
+      >
+        <p
+          ref={useFit({ maxLines: 3, maxSize: 48, lineHeight: 1.2 })}
+          contentEditable
+          spellcheck={false}
+          style={EDITABLE_STYLE}
+        >
+          {text}
+        </p>
+      </div>
+    </DemoFrame>
+  );
+}
+
+// function FluidDemo() {
+//   // Static: computed on the server (or once on the client), shipped as a CSS string.
+//   const fluid = fluidFit(prepare('fluid typography', 'system-ui'), {
+//     minViewport: 360,
+//     maxViewport: 1440,
+//     minSize: 28,
+//     maxSize: 120,
+//   });
+//   return (
+//     <DemoFrame
+//       title="Fluid CSS clamp — zero JS at runtime"
+//       description="The browser interpolates this clamp() natively. Resize the window and watch it move."
+//       code={`fluidFit(prepare('fluid typography'), {
+//   minViewport: 360, maxViewport: 1440, minSize: 28, maxSize: 120,
+// })
+// // → ${fluid.cssClamp}`}
+//     >
+//       <div class="p-6">
+//         <FitText
+//           as="h3"
+//           fluid={fluid}
+//           style={{
+//             margin: 0,
+//             'font-weight': 600,
+//             'letter-spacing': '-0.02em',
+//             'line-height': 0.95,
+//           }}
+//         >
+//           fluid typography
+//         </FitText>
+//       </div>
+//     </DemoFrame>
+//   );
+// }
+
+// function WebGLDemo() {
+//   const [handle] = useState(() =>
+//     prepare('typography that renders into a texture, not the DOM', 'system-ui'),
+//   );
+//   return (
+//     <DemoFrame
+//       title="Beyond the DOM — WebGL"
+//       description="layoutFit reads the live canvas width via useThree() and refits on resize. Each line is a drei <Text> mesh with a neon outline, animated per-line via useFrame — impossible with pure CSS, free with layoutFit."
+//       code={`const { size } = useThree()
+// const layout = layoutFit(handle, { width: size.width, maxLines: 2, maxSize: 64 })
+// useFrame(({ clock }) => group.current.children.forEach((child, i) => {
+//   child.position.y = baseY[i] + Math.sin(clock.elapsedTime * 1.4 + i * 0.9) * 6
+// }))`}
+//     >
+//       <div class="h-[320px] w-full bg-black">
+//         <Canvas
+//           orthographic
+//           camera={{ position: [0, 0, 100], zoom: 1, near: 0.1, far: 1000 }}
+//           dpr={[1, 2]}
+//           gl={{ antialias: true }}
+//         >
+//           <color attach="background" args={['#050505']} />
+//           <FittedText handle={handle} />
+//         </Canvas>
+//       </div>
+//     </DemoFrame>
+//   );
+// }
+
+// function FittedText({ handle }: { handle: FitHandle }) {
+//   const { size } = useThree();
+//   const groupRef = useRef<Group>(null);
+//   const layout = layoutFit(handle, {
+//     width: size.width,
+//     maxLines: 2,
+//     maxSize: 64,
+//     'line-height': 1.1,
+//   });
+
+//   useFrame(({ clock }) => {
+//     const group = groupRef.current;
+//     if (!group) return;
+//     const t = clock.elapsedTime;
+//     for (let i = 0; i < group.children.length; i++) {
+//       const child = group.children[i];
+//       const base = layout.height / 2 - (layout.lines[i]?.y ?? 0);
+//       if (child) child.position.y = base + Math.sin(t * 1.4 + i * 0.9) * 6;
+//     }
+//   });
+
+//   return (
+//     <group ref={groupRef}>
+//       {layout.lines.map((line) => (
+//         <Text
+//           key={line.text}
+//           fontSize={layout.fontSize}
+//           anchorX="left"
+//           anchorY="top"
+//           color="#fafafa"
+//           sdfGlyphSize={256}
+//           outlineWidth={0}
+//           outlineColor="#7cf"
+//           outlineOpacity={0.6}
+//           outlineBlur={layout.fontSize * 0.08}
+//           position={[-size.width / 2, layout.height / 2 - line.y, 0]}
+//         >
+//           {line.text}
+//         </Text>
+//       ))}
+//     </group>
+//   );
+// }
+
+function Install() {
+  return (
+    <section id="install" class="border-b border-[var(--color-line)] py-24">
+      <h2 class="text-xs font-medium uppercase tracking-widest text-[var(--color-muted)]">
+        Install
+      </h2>
+      <pre class="mt-6 overflow-x-auto rounded-lg border border-[var(--color-line)] bg-black/40 p-4 text-sm">
+        <code>bun add @darkroomengineering/fitbox</code>
+      </pre>
+      <p class="mt-6 max-w-2xl text-sm text-[var(--color-muted)]">
+        Pretext ships as a dependency; no peer-install friction. For SSR, add{" "}
+        <code>@napi-rs/canvas</code> and call{" "}
+        <code>configureServerCanvas()</code> once at startup. Full API reference
+        on{" "}
+        <a href="https://github.com/darkroomengineering/fitbox#api">GitHub</a>.
+      </p>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer class="flex flex-col gap-2 py-16 text-sm text-[var(--color-muted)] md:flex-row md:justify-between">
+      <div>
+        Built by <a href="https://darkroom.engineering">darkroom.engineering</a>
+        . MIT licensed.
+      </div>
+      <div class="flex gap-6">
+        <a href="https://github.com/darkroomengineering/fitbox">GitHub</a>
+        <a href="https://www.npmjs.com/package/@darkroomengineering/fitbox">
+          npm
+        </a>
+        <a href="https://github.com/chenglou/pretext">Pretext</a>
+      </div>
+    </footer>
+  );
+}

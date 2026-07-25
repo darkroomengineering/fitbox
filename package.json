@@ -30,12 +30,18 @@
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
     },
+    "./solid": {
+      "types": "./dist/solid/solid/index.d.ts",
+      "import": "./dist/solid/index.js"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -51,7 +57,8 @@
     "@chenglou/pretext": "^0.0.8"
   },
   "peerDependencies": {
-    "react": ">=19.0.0"
+    "react": ">=19.0.0",
+    "solid-js": ">=1.9.0 <2.0.0"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -62,15 +69,20 @@
     "@biomejs/biome": "^2.5.1",
     "@types/react": "^19.0.0",
     "@typescript/native-preview": "^7.0.0-dev.20260623.1",
+    "esbuild-plugin-d.ts": "^2.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.8",
     "react": "^19.0.0",
+    "solid-js": "^1.9.14",
     "tsup": "^8.5.1",
+    "tsup-preset-solid": "^2.2.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx,js,jsx,json}": ["biome check --write --no-errors-on-unmatched"]
+    "src/**/*.{ts,tsx,js,jsx,json}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   },
   "overrides": {
     "esbuild": "^0.28.1"
