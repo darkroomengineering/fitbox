@@ -27,6 +27,7 @@
       },
       "optionalPeers": [
         "react",
+        "solid-js",
       ],
     },
   },
