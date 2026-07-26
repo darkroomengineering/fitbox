@@ -10,35 +10,35 @@ import {
   runWithOwner,
   Show,
   splitProps,
-} from "solid-js";
+} from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import {
   DEFAULT_LINE_HEIGHT,
-  fit,
-  prepare,
   type FitHandle,
   type FitResult,
   type FluidFitResult,
-} from "../core";
+  fit,
+  prepare,
+} from '../core';
 import {
+  type UseFitTextResult as _UseFitTextResult,
   awaitFontsReady,
   resolveFont,
   type UseFitOptions,
   type UseFitTextOptions,
-  type UseFitTextResult as _UseFitTextResult,
-} from "../shared/index";
-import { Dynamic } from "solid-js/web";
+} from '../shared/index';
 
-export { type UseFitOptions, type UseFitTextOptions } from "../shared/index";
+export type { UseFitOptions, UseFitTextOptions } from '../shared/index';
 
-export type UseFitTextResult<E extends HTMLElement = HTMLElement> =
-  _UseFitTextResult<JSX.CSSProperties, E>;
+export type UseFitTextResult<E extends HTMLElement = HTMLElement> = _UseFitTextResult<
+  JSX.CSSProperties,
+  E
+>;
 
 type MaybeAccessor<T> = T | Accessor<T>;
 
 function access<T>(accessor: MaybeAccessor<T>): T {
-  return typeof accessor === "function"
-    ? (accessor as Accessor<T>)()
-    : accessor;
+  return typeof accessor === 'function' ? (accessor as Accessor<T>)() : accessor;
 }
 
 /**
@@ -52,9 +52,7 @@ function access<T>(accessor: MaybeAccessor<T>): T {
  * The hook mutates `element.style.fontSize` (and `lineHeight` if set in
  * options) directly.
  */
-export function useFit(
-  options?: MaybeAccessor<UseFitOptions>,
-): (node: HTMLElement | null) => void {
+export function useFit(options?: MaybeAccessor<UseFitOptions>): (node: HTMLElement | null) => void {
   const owner = getOwner();
 
   return (node) => {
@@ -63,14 +61,14 @@ export function useFit(
     }
 
     let handle: FitHandle | null = null;
-    let lastText = "";
+    let lastText = '';
     let raf: number | null = null;
 
     const update = () => {
       raf = null;
 
       const opts = access(options) ?? {};
-      const text = node.textContent ?? "";
+      const text = node.textContent ?? '';
 
       if (text !== lastText) {
         const font = opts.family ?? resolveFont(node);
@@ -147,14 +145,12 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
 ): UseFitTextResult<E> {
   const owner = getOwner();
 
-  const [result, setResult] = createSignal<FitResult | null>(
-    access(options).preset ?? null,
-  );
+  const [result, setResult] = createSignal<FitResult | null>(access(options).preset ?? null);
 
   let node: E | null = null;
   let handle: FitHandle | null = null;
-  let preparedText = "";
-  let preparedFont = "";
+  let preparedText = '';
+  let preparedFont = '';
   let raf: number | null = null;
 
   const update = () => {
@@ -246,10 +242,7 @@ export function useFitText<E extends HTMLElement = HTMLElement>(
   };
 }
 
-export type FitTextProps = Omit<
-  JSX.HTMLAttributes<HTMLElement>,
-  "children" | "style"
-> &
+export type FitTextProps = Omit<JSX.HTMLAttributes<HTMLElement>, 'children' | 'style'> &
   UseFitOptions & {
     as?: keyof HTMLElementTagNameMap;
     children: string;
@@ -262,21 +255,20 @@ export type FitTextProps = Omit<
   };
 
 export function FitText(props: FitTextProps) {
-  const defaultProps = mergeProps(props, { as: "div" });
+  const defaultProps = mergeProps(props, { as: 'div' });
   const [local, domProps] = splitProps(defaultProps, [
-    "as",
-    "fluid",
-    "preset",
-    "style",
-    "family",
-    "prepare",
-    "height",
-    "maxLines",
-    "minSize",
-    "maxSize",
-    "lineHeight",
+    'as',
+    'fluid',
+    'preset',
+    'style',
+    'family',
+    'prepare',
+    'height',
+    'maxLines',
+    'minSize',
+    'maxSize',
+    'lineHeight',
   ]);
-
 
   const Fallback = () => {
     const fitRef = useFit(() => ({
@@ -289,24 +281,20 @@ export function FitText(props: FitTextProps) {
       lineHeight: local.lineHeight,
     }));
 
-    const initialStyle: Accessor<JSX.CSSProperties | undefined> = () => local.preset
-      ? { "font-size": `${local.preset.fontSize}px`, ...local.style }
-      : local.style;
+    const initialStyle: Accessor<JSX.CSSProperties | undefined> = () =>
+      local.preset ? { 'font-size': `${local.preset.fontSize}px`, ...local.style } : local.style;
 
-    return <Dynamic component={local.as} {...domProps} ref={fitRef} style={initialStyle} />
-  }
+    return <Dynamic component={local.as} {...domProps} ref={fitRef} style={initialStyle} />;
+  };
 
   return (
-    <Show
-      when={local.fluid}
-      fallback={<Fallback />}
-    >
+    <Show when={local.fluid} fallback={<Fallback />}>
       {(fluid) => (
         <Dynamic
           component={local.as}
           {...domProps}
           style={{
-            "font-size": fluid().cssClamp,
+            'font-size': fluid().cssClamp,
             ...local.style,
           }}
         />

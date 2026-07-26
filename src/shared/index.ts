@@ -1,4 +1,4 @@
-import type { FitOptions, FitResult, PrepareOptions } from "../core";
+import type { FitOptions, FitResult, PrepareOptions } from '../core';
 
 export function resolveFont(el: HTMLElement): string {
   const cs = getComputedStyle(el);

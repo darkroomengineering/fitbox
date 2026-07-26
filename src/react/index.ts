@@ -18,11 +18,20 @@ import {
   fit,
   prepare,
 } from '../core/index';
-import { awaitFontsReady, resolveFont, type UseFitOptions, type UseFitTextOptions, type UseFitTextResult as _UseFitTextResult } from '../shared/index';
+import {
+  type UseFitTextResult as _UseFitTextResult,
+  awaitFontsReady,
+  resolveFont,
+  type UseFitOptions,
+  type UseFitTextOptions,
+} from '../shared/index';
 
-export { type UseFitOptions, type UseFitTextOptions } from '../shared/index';
+export type { UseFitOptions, UseFitTextOptions } from '../shared/index';
 
-export type UseFitTextResult<E extends HTMLElement = HTMLElement> = _UseFitTextResult<CSSProperties, E>
+export type UseFitTextResult<E extends HTMLElement = HTMLElement> = _UseFitTextResult<
+  CSSProperties,
+  E
+>;
 
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
