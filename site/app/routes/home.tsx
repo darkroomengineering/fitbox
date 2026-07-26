@@ -41,7 +41,7 @@ function Hero() {
         fitbox
       </h1>
       <p className="mt-8 max-w-2xl text-xl leading-relaxed text-[var(--color-muted)]">
-        Reflow-free text-to-box fitting for React.
+        Reflow-free text-to-box fitting for React and SolidJS.
       </p>
       <p className="mt-4 max-w-2xl text-lg leading-relaxed text-[var(--color-muted)]">
         <a href="https://github.com/chenglou/pretext">Pretext</a> measures how text lays out. fitbox
